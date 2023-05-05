@@ -9,6 +9,7 @@ useHead({
   ]
 })
 
+
 const allCamera = await $fetch('/api/camera');
 </script>
 <template>

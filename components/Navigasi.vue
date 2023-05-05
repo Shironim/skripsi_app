@@ -1,6 +1,12 @@
 <script setup>
-  const router = useRouter()
+  // const router = useRouter()
   const keyword = ref('')
+
+  import { inject } from 'vue'
+
+  let {toogle} = inject('chat')
+
+
   const handleSearch = () => {
     // how to check if enter key is pressed?
     // router.push({
@@ -25,7 +31,7 @@
           <div class="self-center">
             <Icon name="material-symbols:shopping-cart" class="text-slate-800 mx-2"></Icon>
             <Icon name="material-symbols:notifications" class="text-slate-800 mx-2"></Icon>
-            <Icon name="material-symbols:android-messages" class="text-slate-800 mx-2"></Icon>
+            <Icon @click="toogle" name="material-symbols:android-messages" class="text-slate-800 mx-2"></Icon>
           </div>
         </div>
         <div class="flex justify-end col-span-2">
