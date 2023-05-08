@@ -1,20 +1,23 @@
 <script setup>
-  // const router = useRouter()
+  const router = useRouter()
   const keyword = ref('')
 
   import { inject } from 'vue'
 
   let {toogle} = inject('chat')
 
-
-  const handleSearch = () => {
+  const handleSearch = (e) => {
     // how to check if enter key is pressed?
-    // router.push({
-    //   path: '/search',
-    //   query: {
-    //     keyword: keyword.value
-    //   }
-    // })
+    if (e.keyCode === 13) {
+      console.log('enter')
+      router.push({
+        path: '/search',
+        query: {
+          keyword: keyword.value
+        }
+      })
+      keyword.value = ''
+    }
   }
 </script>
 <template>

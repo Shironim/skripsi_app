@@ -1,7 +1,12 @@
 <script setup>
   const allCamera = await $fetch('/api/camera');
   const route = useRoute();
-  const produk = allCamera.filter((item) => item.name.includes(route.query.keyword))
+  let produk = reactive()
+  watchEffect(() => {
+    // console.log(route.query.keyword)
+    produk = (allCamera.filter((item) => item.name.includes(route.query.keyword)))
+    // console.log(produk)
+  })
 </script>
 <template>
   <div class="md:max-w-5xl mx-auto grid grid-cols-12">
