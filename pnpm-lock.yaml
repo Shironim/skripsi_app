@@ -1,6 +1,9 @@
 lockfileVersion: '6.0'
 
 dependencies:
+  '@chenfengyuan/vue-carousel':
+    specifier: '2'
+    version: 2.0.0
   flowbite:
     specifier: ^1.6.5
     version: 1.6.5
@@ -335,6 +338,12 @@ packages:
       '@babel/helper-validator-identifier': 7.19.1
       to-fast-properties: 2.0.0
     dev: true
+
+  /@chenfengyuan/vue-carousel@2.0.0:
+    resolution: {integrity: sha512-1PV4kDXH9IrDhb6rUUiD5l2IgcNZfcgL0mG7MLhHE6goMrpissUBTeAM9K4NqZeoamlY9XFAxUuEkbQh9qa7Jg==}
+    peerDependencies:
+      vue: ^3.0.0
+    dev: false
 
   /@cloudflare/kv-asset-handler@0.3.0:
     resolution: {integrity: sha512-9CB/MKf/wdvbfkUdfrj+OkEwZ5b7rws0eogJ4293h+7b6KX5toPwym+VQKmILafNB9YiehqY0DlNrDcDhdWHSQ==}

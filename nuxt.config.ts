@@ -7,8 +7,10 @@ export default defineNuxtConfig({
   ],
   alias:{
     '@assets' : '/assets',
+    '@plugins' : '/plugins',
   },
   css : [
     '@/assets/stylesheets/index.scss'
-  ]
+  ],
+  // plugins: ['@/plugins/vue-carousel.js']
 })
