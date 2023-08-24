@@ -31,7 +31,7 @@ const allCamera = await $fetch('/api/camera');
   <!-- Kategori Pilihan (Tokped) (2 baris => 6 item) -->
   <Categories />
   <!-- <Search /> -->
-  <section class="md:max-w-5xl mx-auto px-4 xl:px-0">
+  <section class="md:max-w-5xl mx-auto px-4">
     <div class="flex mb-12">
       <div class="flex flex-row flex-wrap">
         <ComponentProduct :dataProduct="allCamera" />

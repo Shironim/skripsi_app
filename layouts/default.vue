@@ -9,11 +9,11 @@ let {isChatActive} = inject('chat')
 </script>
 <template>
   <div class="flex">
-    <div :class="isChatActive ? 'basis-8/12' : 'basis-full'">
+    <div :class="isChatActive ? 'basis-9/12' : 'basis-full'">
       <Navigasi />
       <slot />
     </div>
-    <div :class="isChatActive ? 'basis-4/12' : 'hidden'">
+    <div :class="isChatActive ? 'basis-3/12' : 'hidden'">
       <ChatContainer />
     </div>
   </div>

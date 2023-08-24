@@ -10,7 +10,7 @@ defineProps({
   <div v-for="(camera, index) in dataProduct" :key="index" class="basis-1/4 ">
     <div class="border rounded-md mr-3 mb-3 overflow-hidden">
       <figure>
-        <NuxtImg :src="camera.img" :alt="camera.name" class="lg:min-h-[140px] xl:min-h-[180px]" height="180px" width="100%" fit="cover" />
+        <NuxtImg :src="camera.img" :alt="camera.name" class="mx-auto lg:min-h-[180px] xl:min-h-[180px]" height="180px" width="100%" fit="cover" />
       </figure>
       <figcaption class="flex flex-col">
         <div class="p-4">
