@@ -21,10 +21,10 @@ watchEffect((dataDate) => {
           <div class="flex flex-col border-b-4 border-gray-200 pb-3 pt-4">
             <div class="flex pb-1">
               <div class="basis-1/6">
-                <img src="/images/canon-eos-1200d.png" class="max-w-full" alt="">
+                <img src="/images/canon-eos-700d.png" class="max-w-full" alt="">
               </div>
               <div class="basis-5/6">
-                <h2 class="text-lg pb-2 font-semibold">Canon EOS 1200D</h2>
+                <h2 class="text-lg pb-2 font-semibold">Camera EOS Canon 700D</h2>
                 <p class="text-md">Rp. 125.000 / Day</p>
               </div>
             </div>

@@ -46,8 +46,8 @@ const modalShow = ref(false);
                   clip-rule="evenodd" />
               </svg>
               Filter
-              <svg class="-mr-1 ml-1.5 w-5 h-5" fill="currentColor" viewbox="0 0 20 20"
-                xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <svg class="-mr-1 ml-1.5 w-5 h-5" fill="currentColor" viewbox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true">
                 <path clip-rule="evenodd" fill-rule="evenodd"
                   d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
               </svg>
@@ -86,7 +86,7 @@ const modalShow = ref(false);
                 </li>
               </ul>
             </div>
-            </div>
+          </div>
         </div>
         <div class="overflow-x-auto">
           <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
@@ -106,7 +106,8 @@ const modalShow = ref(false);
             </thead>
             <tbody>
               <tr class="border-b dark:border-gray-700">
-                <th scope="row" class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">INV-ADMS-08-23-2</th>
+                <th scope="row" class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                  INV-ADMS-08-23-2</th>
                 <td class="px-4 py-3">
                   Dimas Seto
                 </td>
@@ -148,8 +149,9 @@ const modalShow = ref(false);
                 </td>
               </tr>
               <tr class="border-b dark:border-gray-700">
-                <th scope="row" class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">INV-ADMS-08-23-1</th>
-                  <td class="px-4 py-3">
+                <th scope="row" class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                  INV-ADMS-08-23-1</th>
+                <td class="px-4 py-3">
                   Dimas Seto
                 </td>
                 <td class="px-4 py-3">
@@ -157,7 +159,8 @@ const modalShow = ref(false);
                 </td>
                 <td class="px-4 py-3">12-08-2023</td>
                 <td class="px-4 py-3 flex hover:text-blue-500 hover:cursor-pointer">
-                  <Icon name="ph:eye-bold" class="self-center mr-2" size="20"></Icon> <span class="self-center font-semibold text-md">Lihat</span>
+                  <Icon name="ph:eye-bold" class="self-center mr-2" size="20"></Icon> <span
+                    class="self-center font-semibold text-md">Lihat</span>
                 </td>
                 <td class="px-4 py-3">-</td>
                 <td class="px-4 py-3">-</td>
@@ -236,8 +239,8 @@ const modalShow = ref(false);
       </div>
     </div>
   </section>
-    <!-- Main modal -->
-    <div id="createProduct" tabindex="-1" aria-hidden="true"
+  <!-- Main modal -->
+  <div id="createProduct" tabindex="-1" aria-hidden="true"
     :class="modalShow ? 'block bg-gray-800 bg-opacity-75' : 'hidden'"
     class="overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-modal md:h-full ">
     <div class="relative p-4 w-full max-w-2xl h-full md:h-auto mx-auto">
@@ -246,7 +249,7 @@ const modalShow = ref(false);
         <!-- Modal header -->
         <div class="flex justify-between items-center pb-4 mb-4 rounded-t border-b sm:mb-5 dark:border-gray-600">
           <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-            Tambah Produk
+            Form Pengembalian Alat
           </h3>
           <button type="button" @click="modalShow = false"
             class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white">
@@ -261,77 +264,81 @@ const modalShow = ref(false);
         </div>
         <!-- Modal body -->
         <form action="#">
+          <div class="flex flex-col w-full border-b-2 pb-4 mb-6 space-y-2">
+            <div class="flex justify-between">
+              <p class="self-center text-lg font-semibold">
+                Kode Invoice
+              </p>
+              <p class="self-center text-lg">
+                INV-ADMS-08-23-1
+              </p>
+            </div>
+            <div class="flex justify-between">
+              <p class="self-center font-semibold">
+                Nama Peminjam
+              </p>
+              <p class="self-center ">
+                Dimas Seto
+              </p>
+            </div>
+            <div class="flex justify-between">
+              <p class="self-center font-semibold">
+                Status
+              </p>
+              <p class="self-center text-sm bg-slate-500 px-3 py-1 rounded-md text-white font-semibold">
+                Belum Diambil
+              </p>
+            </div>
+          </div>
+          <div class="mb-6 border-b-2 pb-4">
+            <h2 class="text-lg font-semibold mb-4">Alat yang disewa</h2>
+            <div class="flex mb-2">
+              <div class="basis-1/3">
+                <span class="font-semibold">Nama Alat</span>
+              </div>
+              <div class="basis-1/3">
+                <span class="font-semibold">Gambar</span>
+              </div>
+              <div class="basis-1/3">
+                <span class="font-semibold">Tanggal Ambil</span>
+              </div>
+            </div>
+            <div class="flex">
+              <div class="basis-1/3 self-center">
+                Camera EOS Canon 700D
+              </div>
+              <div class="basis-1/3 self-center">
+                <img src="/images/canon-eos-700d.png" width="100" height="100" alt="">
+              </div>
+              <div class="basis-1/3 self-center">
+                29/08/2023
+              </div>
+            </div>
+          </div>
           <div class="grid gap-4 mb-4 sm:grid-cols-2">
             <div>
-              <label for="name" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Name</label>
-              <input type="text" name="nama" id="nama"  class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                placeholder="Nikon D700" required="">
-            </div>
-            <div>
-              <label for="brand" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Brand</label>
-              <input type="text" name="brand" id="brand" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                placeholder="Nikon / Sony" required="">
-            </div>
-            <div>
-              <label for="harga" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Harga</label>
-              <input type="number" name="harga" id="harga"  class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                placeholder="120000" required="">
-            </div>
-            <div>
-              <label for="category" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Kategori</label>
-              <select id="category"  
-                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
-                <option selected="">Kategori</option>
-                <option value="kamera_foto">Kamera Foto</option>
-                <option value="kamera_video">Kamera Video</option>
-                <option value="lensa">Lensa</option>
-                <option value="tv_monitor">TV/Monitors</option>
-                <option value="tripod">Tripod</option>
+              <label for="update_status" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Update
+                Status</label>
+              <select
+                class="appearance-none bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                name="update_status" id="">
+                <option value="">Status</option>
+                <option value="">Sudah Diambil</option>
               </select>
             </div>
             <div class="sm:col-span-2">
-              <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white" for="file_input">Upload
-                Gambar</label>
+              <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white" for="file_input">Upload Bukti
+                Ambil Alat</label>
               <input
                 class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
                 id="file_input" type="file">
             </div>
-            <div class="sm:col-span-2">
-              <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white" for="file_input">Spesifikasi </label>
-              <div >
-                <div class="flex space-x-4 mb-4">
-                  <div class="basis-1/3">
-                    <label for="panjang" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Panjang</label>
-                    <input type="text" name="panjang" id="panjang" 
-                      class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                      placeholder="3 meter" required="">
-                  </div>
-                  <div class="basis-1/3">
-                    <label for="bahan"
-                      class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Bahan</label>
-                    <input type="text" name="bahan" id="bahan" 
-                      class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                      placeholder="Stainlestell" required="">
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="sm:col-span-2">
-              <label for="description"
-                class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Deskripsi</label>
-              <textarea id="description" rows="4"
-                class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                placeholder="Deskripsi"></textarea>
-            </div>
+
           </div>
           <button type="submit"
-            class="border inline-flex items-center bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800">
-            <svg class="mr-1 -ml-1 w-6 h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-              <path fill-rule="evenodd"
-                d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
-                clip-rule="evenodd"></path>
-            </svg>
-            Add
+            class="w-full border bg-green-500 font-semibold focus:ring-4 focus:outline-none focus:ring-primary-300 text-white rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800">
+            <Icon name="dashicons:update" size="24" class="mr-2 text-white" />
+            <span class="font-semibold text-white">Perbarui</span>
           </button>
         </form>
       </div>
