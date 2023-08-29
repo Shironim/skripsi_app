@@ -12,6 +12,7 @@
     "@nuxt/image-edge": "1.0.0-28050764.aaee7ac",
     "@nuxtjs/google-fonts": "3.0.0-1",
     "@nuxtjs/tailwindcss": "^6.6.5",
+    "@tailvue/nuxt": "^1.0.0",
     "@types/node": "^18.15.11",
     "nuxt": "^3.4.0",
     "nuxt-icon": "^0.4.0",
@@ -19,6 +20,7 @@
   },
   "dependencies": {
     "@vuepic/vue-datepicker": "^6.0.1",
-    "flowbite": "^1.6.5"
+    "flowbite": "^1.6.5",
+    "vue-toastification": "^2.0.0-rc.5"
   }
 }

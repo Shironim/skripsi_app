@@ -2,6 +2,10 @@
 definePageMeta({
   layout: 'admin',
 })
+
+const baseApiUrl = useRuntimeConfig().public.BASE_API_URL;
+const allCamera = await $fetch(`${baseApiUrl}/produk`).catch((error) => error.data);
+const allTransaksi = await $fetch(`${baseApiUrl}/allinvoice`).catch((error) => error.data);
 </script>
 
 <template>
@@ -56,71 +60,20 @@ definePageMeta({
             <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
               <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                 <tr>
-                  <th scope="col" class="px-2 py-3">No</th>
                   <th scope="col" class="px-4 py-3">Nama Produk</th>
                   <th scope="col" class="px-4 py-3">Kategori</th>
                   <th scope="col" class="px-4 py-3">Status</th>
                 </tr>
               </thead>
               <tbody>
-                <tr class="border-b dark:border-gray-700">
-                  <td class="px-2 py-3">1</td>
-                  <th scope="row" class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">Camera EOS Canon 700D</th>
+                <tr v-for="camera in allCamera.data" class="border-b dark:border-gray-700">
+                  <th scope="row" class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">{{camera.nama}}</th>
                   <td class="px-4 py-3">
-                    Kamera Foto
+                    {{ camera.type_produk }}
                   </td>
                   <td class="px-4 py-3">
-                    <span class="text-red-500 font-semibold">Disewa</span>
-                  </td>
-                </tr>
-                <tr class="border-b dark:border-gray-700">
-                  <td class="px-2 py-3">2</td>
-                  <th scope="row" class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">Camera Nikon D7100</th>
-                  <td class="px-4 py-3">
-                    Kamera Foto
-                  </td>
-                  <td class="px-4 py-3">
-                    <span class="text-red-500 font-semibold">Disewa</span>
-                  </td>
-                </tr>
-                <tr class="border-b dark:border-gray-700">
-                  <td class="px-2 py-3">3</td>
-                  <th scope="row" class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">Nikon AF-S 50 f/1.8G</th>
-                  <td class="px-4 py-3">
-                    Lensa
-                  </td>
-                  <td class="px-4 py-3">
-                    <span class="text-green-500 font-semibold">Tersedia</span>
-                  </td>
-                </tr>
-                <tr class="border-b dark:border-gray-700">
-                  <td class="px-2 py-3">4</td>
-                  <th scope="row" class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">Canon EF 135 f/2L USM</th>
-                  <td class="px-4 py-3">
-                    Lensa
-                  </td>
-                  <td class="px-4 py-3">
-                    <span class="text-green-500 font-semibold">Tersedia</span>
-                  </td>
-                </tr>
-                <tr class="border-b dark:border-gray-700">
-                  <td class="px-2 py-3">5</td>
-                  <th scope="row" class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">Tripod Manfrotto</th>
-                  <td class="px-4 py-3">
-                    Tripod
-                  </td>
-                  <td class="px-4 py-3">
-                    <span class="text-red-500 font-semibold">Disewa</span>
-                  </td>
-                </tr>
-                <tr class="border-b dark:border-gray-700">
-                  <td class="px-2 py-3">6</td>
-                  <th scope="row" class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">Camera Nikon D500</th>
-                  <td class="px-4 py-3">
-                    Kamera Foto
-                  </td>
-                  <td class="px-4 py-3">
-                    <span class="text-green-500 font-semibold">Tersedia</span>
+                    <span v-if="camera.status == 'disewa'" class="text-red-500 font-semibold">{{camera.status}}</span>
+                    <span v-if="camera.status == 'tersedia'" class="text-green-500 font-semibold">{{camera.status}}</span>
                   </td>
                 </tr>
               </tbody>
@@ -139,7 +92,6 @@ definePageMeta({
             <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
               <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                 <tr>
-                  <th scope="col" class="px-2 py-3">No</th>
                   <th scope="col" class="px-4 py-3">Invoice</th>
                   <th scope="col" class="px-4 py-3">Peminjam</th>
                   <th scope="col" class="px-4 py-3">Status</th>
@@ -147,30 +99,16 @@ definePageMeta({
                 </tr>
               </thead>
               <tbody>
-                <tr class="border-b dark:border-gray-700">
-                  <td class="px-2 py-3">1</td>
+                <tr v-for="invoice in allTransaksi.data" class="border-b dark:border-gray-700">
                   <th scope="row" class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">INV-08-23-02</th>
                   <td class="px-4 py-3">
-                    Dimas Seto
+                    {{ invoice.nama_depan }}
                   </td>
                   <td class="px-4 py-3">
-                    Belum Bayar
+                    {{ invoice.status_sewa }}
                   </td>
                   <td class="px-4 py-3">
-                    Rp. 375.000
-                  </td>
-                </tr>
-                <tr class="border-b dark:border-gray-700">
-                  <td class="px-2 py-3">2</td>
-                  <th scope="row" class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">INV-08-23-01</th>
-                  <td class="px-4 py-3">
-                    Dimas Seto
-                  </td>
-                  <td class="px-4 py-3">
-                    DP
-                  </td>
-                  <td class="px-4 py-3">
-                    Rp. 200.000
+                    Rp. {{ invoice.total_harga}}.000
                   </td>
                 </tr>
             </tbody>

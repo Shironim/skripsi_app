@@ -5,14 +5,22 @@ export default defineNuxtConfig({
     '@nuxt/image-edge',
     '@nuxtjs/google-fonts',
     'nuxt-icon',
+    '@tailvue/nuxt',
   ],
-  alias:{
-    '@assets' : '/assets',
-    '@plugins' : '/plugins',
+  ssr: false,
+  alias: {
+    '@assets': '/assets',
+    '@plugins': '/plugins',
   },
-  css : [
+  css: [
     '@/assets/stylesheets/index.scss'
   ],
+  runtimeConfig: {
+    // Config within public will be also exposed to the client
+    public: {
+      BASE_API_URL: 'http://localhost:5000',
+    }
+  },
   googleFonts: {
     families: {
       Roboto: true,
@@ -30,7 +38,6 @@ export default defineNuxtConfig({
   },
   build: {
     transpile: ['@vuepic/vue-datepicker']
-}
-  
-  // plugins: ['@/plugins/vue-carousel.js']
+  },
+
 })

@@ -1,61 +1,38 @@
 <script setup>
 // route for detail route info
+const baseApiUrl = useRuntimeConfig().public.BASE_API_URL;
 const route = useRoute();
-// router for navigation
-// const router = useRouter();
-// console.log(router.install)
-// console.log('fullPath', route.fullPath)
-// console.log('hash', route.hash)
-// console.log('params', route.params)
-const data = await $fetch('/api/camera');
-const cameras = data.filter((camera) => camera.slug === route.params.slug);
-const allCamera = data.filter((camera) => camera.name.includes('Camera'));
-// console.log(cameras)
+const allCamera = await $fetch(`${baseApiUrl}/produk`).catch((error) => error.data);
+const camera = await $fetch(`${baseApiUrl}/produk/${route.params.slug}`).catch((error) => error.data);
+const spesifikasi = JSON.parse(camera.data[0].spesifikasi_detail);
 
-const naf = ref('spesification')
-const showLaporkan = ref(false)
-const change = (nav) => {
-  naf.value = nav
-}
-const toogleLaporkan = () => {
-  showLaporkan.value = !showLaporkan.value
-}
+const rekomendasi = allCamera.data.filter((recomen)=>{
+  return recomen.type_produk == camera.data[0].type_produk
+})
 
-const count = ref(1);
-const selectedProduct = ref(0)
-const selectedMediaProduct = ref(0)
-
-const changeSelectedProduct = (index) => {
-  count.value = 1
-  selectedProduct.value = index
-  selectedMediaProduct.value = 0
-}
-
-const minCount = () => {
-  if (count.value > 1) {
-    count.value = count.value - 1
-  }
-}
-const rupiah = (number) => {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR"
-  }).format(number);
-}
-
-const totalHarga = () => {
-  return rupiah(currentProduct.variant[selectedProduct.value].harga * count.value)
+const addKeranjang = async () => {
+  await $fetch(`${baseApiUrl}/user/addcart`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(
+      {
+      id_user : '1',
+      id_produk : '2',
+    })
+  })
 }
 
 </script>
 <template>
   <div class="">
     <section class="md:max-w-5xl mx-auto py-8">
-      <h1 class="text-2xl font-semibold pb-4">{{ cameras[0].name }}</h1>
+      <h1 class="text-2xl font-semibold pb-4">{{ camera.data[0].nama }}</h1>
       <div class="flex pb-6">
         <div class="basis-3/12">
           <figure>
-            <img :src="cameras[0].img" :alt="cameras[0].name">
+            <img :src="`${baseApiUrl}/${camera.data[0].thumbnail}`" :alt="camera.data[0].nama">
           </figure>
         </div>
         <div class="basis-6/12 bg-white py-2 rounded-md">
@@ -68,30 +45,66 @@ const totalHarga = () => {
           <div class="px-3">
             <div class="block">
               <div>
-                <table class="table">
+                <table class="table" v-if="camera.data[0].type_produk == 'tripod'">
+                  <tr>
+                    <th class="text-start p-2 border">Tinggi Maksimum</th>
+                    <th class="text-end p-2 border">{{ spesifikasi.tinggi_maksimum }}</th>
+                  </tr>
+                  <tr>
+                    <th class="text-start p-2 border">Bahan</th>
+                    <th class="text-end p-2 border">{{ spesifikasi.bahan }}</th>
+                  </tr>
+                </table>
+                <table class="table" v-if="camera.data[0].type_produk == 'kamera_foto'">
                   <tr>
                     <th class="text-start p-2 border">ISO</th>
-                    <th class="text-end p-2 border">100 - 12800</th>
+                    <th class="text-end p-2 border">{{ spesifikasi.iso }}</th>
                   </tr>
                   <tr>
                     <th class="text-start p-2 border">Shutter</th>
-                    <th class="text-end p-2 border">30 - 1/4000 seconds</th>
+                    <th class="text-end p-2 border">{{ spesifikasi.shutter }}</th>
                   </tr>
                   <tr>
                     <th class="text-start p-2 border">File Format</th>
-                    <th class="text-end p-2 border">JPEG</th>
+                    <th class="text-end p-2 border">{{ spesifikasi.file_format }}</th>
                   </tr>
                   <tr>
                     <th class="text-start p-2 border">Memory Card Type</th>
-                    <th class="text-end p-2 border">SD, SDHC, SDXC</th>
+                    <th class="text-end p-2 border">{{ spesifikasi.memory_card_type }}</th>
                   </tr>
                   <tr>
                     <th class="text-start p-2 border">Dimensi</th>
-                    <th class="text-end p-2 border">133 x 99 x 78 mm</th>
+                    <th class="text-end p-2 border">{{ spesifikasi.dimensi }}</th>
                   </tr>
                   <tr>
                     <th class="text-start p-2 border">Berat</th>
-                    <th class="text-end p-2 border">580 gr</th>
+                    <th class="text-end p-2 border">{{ spesifikasi.weight }}</th>
+                  </tr>
+                </table>
+                <table class="table" v-if="camera.data[0].type_produk == 'lensa_kamera'">
+                  <tr>
+                    <th class="text-start p-2 border">Focal Length</th>
+                    <th class="text-end p-2 border">{{ spesifikasi.focal_length }}</th>
+                  </tr>
+                  <tr>
+                    <th class="text-start p-2 border">Image Stabilization</th>
+                    <th class="text-end p-2 border">{{ spesifikasi.img_stabilization }}</th>
+                  </tr>
+                  <tr>
+                    <th class="text-start p-2 border">Auto Focus</th>
+                    <th class="text-end p-2 border">{{ spesifikasi.auto_focus }}</th>
+                  </tr>
+                  <tr>
+                    <th class="text-start p-2 border">Maks Apperture</th>
+                    <th class="text-end p-2 border">{{ spesifikasi.maks_apperture }}</th>
+                  </tr>
+                  <tr>
+                    <th class="text-start p-2 border">Min Apperture</th>
+                    <th class="text-end p-2 border">{{ spesifikasi.min_apperture }}</th>
+                  </tr>
+                  <tr>
+                    <th class="text-start p-2 border">Apperture Ring</th>
+                    <th class="text-end p-2 border">{{ spesifikasi.apperture_ring }}</th>
                   </tr>
                 </table>
               </div>
@@ -105,16 +118,17 @@ const totalHarga = () => {
               <div class="pb-2">
                 <div class="flex justify-between">
                   <p class="text-md self-center">Status</p>
-                  <p class="text-md bg-green-400 px-3 py-1 rounded-lg font-semibold text-white">Tersedia</p>
+                  <p v-if="camera.data[0].status == 'tersedia'" class="text-md bg-green-400 px-3 py-1 rounded-lg font-semibold text-white">Tersedia</p>
+                  <p v-if="camera.data[0].status == 'disewa'" class="text-md bg-red-400 px-3 py-1 rounded-lg font-semibold text-white">Disewa</p>
                 </div>
               </div>
               <div class="flex justify-between">
                 <p class="text-md font-semibold">Harga Sewa</p>
-                <p class="text-md font-semibold">Rp. 125k / Day</p>
+                <p class="text-md font-semibold">{{ camera.data[0].harga }} K / Day</p>
               </div>
             </div>
             <div class="flex flex-col gap-y-4">
-              <button class="btn border font-semibold rounded-md bg-orange-400 text-white px-2 py-1">
+              <button @click="addKeranjang" class="btn border font-semibold rounded-md bg-orange-400 text-white px-2 py-1">
                 <Icon name="ion:cart" size="24px"></Icon>
                 <span class="self-center ml-2">Simpan</span>
               </button>
@@ -130,10 +144,7 @@ const totalHarga = () => {
               <span class="ml-2 self-center">Deskripsi</span>
             </div>
           </div>
-          <p>EOS 700D menawarkan kinerja yang padat dan penuh, merupakan salah satu DSLR yang terbaik pada entry level
-            dengan kualitas gambar yang tinggi, berbagai fungsi Live View AF dan video. Layar yang bisa dilipat dan
-            diputar serta dengan kemampuan layar sentuh kapasitif serta desain Mode Dialed 360 derajat yang baru dan
-            Creative Filter juga pasti akan memperluas inspirasi dan ekspresi kreatif.</p>
+          <p>{{ camera.data[0].deskripsi }}</p>
         </div>
       </div>
     </section>
@@ -142,7 +153,7 @@ const totalHarga = () => {
     <div class="my-8 p-4">
       <h2 class="mb-4 font-bold text-xl">Rekomendasi</h2>
       <div class="flex">
-        <ComponentProduct :dataProduct="allCamera" />
+        <ComponentProduct :dataProduct="rekomendasi" />
       </div>
     </div>
 </section></template>

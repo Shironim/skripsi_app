@@ -3,12 +3,81 @@
 import { ref } from 'vue';
 import VueDatePicker from '@vuepic/vue-datepicker';
 import '@vuepic/vue-datepicker/dist/main.css'
-
+import { inject } from 'vue'
+import { useToast } from 'tailvue'
+const route = useRouter();
+const $toast = useToast()
+let { idUser } = inject('idUser')
+const baseApiUrl = useRuntimeConfig().public.BASE_API_URL;
 const dataDate = ref();
+const { data: cart, error, pending, refresh } = await useFetch(`${baseApiUrl}/getcart/${idUser.value}`).catch((error) => error.data);
+const alertDelete = () => {
+  // Use sweetalert2
+  $toast.show({
+    type: 'danger',
+    message: 'Berhasil dihapus',
+    timeout: 3,
+  });
+}
+const alertCheckout = () => {
+  // Use sweetalert2
+  $toast.show({
+    type: 'success',
+    message: 'Berhasil Checkout',
+    timeout: 3,
+  });
+}
+const deleteCart = async (idCart) => {
+  try {
+    await $fetch(`${baseApiUrl}/cart/`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(
+        {
+          id_cart: idCart,
+        })
+    })
+    alertDelete()
+  } catch (error) {
+    console.log(error)
+  }
+}
+if (!idUser.value) {
+  route.push('/login')
+}
 
-watchEffect((dataDate) => {
-  console.log(dataDate.value)
-})
+const totalHarga = () => {
+  let total = 0
+  cart.value.data.forEach((data) => {
+    total += data.harga * data.jumlah_hari
+  })
+  return total
+}
+
+const checkout = async () => {
+  try {
+    await $fetch(`${baseApiUrl}/invoice/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(
+        {
+          id_user: idUser.value,
+          produk: cart.value?.data?.map((data) => { return data.id_produk }),
+          tanggal_sewa: dataDate.value,
+          tanggal_kembali: dataDate.value,
+          total_harga: totalHarga(),
+          status_sewa: 'belum_bayar'
+        })
+    })
+    alertCheckout()
+  } catch (error) {
+    console.log(error)
+  }
+}
 
 </script>
 
@@ -16,16 +85,16 @@ watchEffect((dataDate) => {
   <section class="max-w-5xl mx-auto">
     <div class="flex space-x-8 mt-12">
       <div class="basis-2/3">
-        <h1 class="text-2xl font-semibold">Keranjang Belanja</h1>
-        <div class="flex flex-col pt-4">
-          <div class="flex flex-col border-b-4 border-gray-200 pb-3 pt-4">
+        <h1 class="text-2xl font-semibold">Alat yang akan disewa</h1>
+        <div v-if="cart" class="flex flex-col pt-4">
+          <div v-for="data in cart.data" class="flex flex-col border-b-4 border-gray-200 pb-3 pt-4">
             <div class="flex pb-1">
               <div class="basis-1/6">
                 <img src="/images/canon-eos-700d.png" class="max-w-full" alt="">
               </div>
               <div class="basis-5/6">
-                <h2 class="text-lg pb-2 font-semibold">Camera EOS Canon 700D</h2>
-                <p class="text-md">Rp. 125.000 / Day</p>
+                <h2 class="text-lg pb-2 font-semibold">{{ data.nama }}</h2>
+                <p class="text-md">Rp. {{ data.harga }} K / Day</p>
               </div>
             </div>
             <div class="flex justify-end">
@@ -34,7 +103,7 @@ watchEffect((dataDate) => {
                   Tanggal Sewa
                 </p>
                 <div class="flex items-cente w-full">
-                  <VueDatePicker class="self-center" v-model="dataDate" :enable-time-picker="false"></VueDatePicker>
+                  <input type="date" v-model="dataDate" class="rounded-md">
                 </div>
               </div>
               <div class="flex mr-2 basis-4/12">
@@ -42,14 +111,15 @@ watchEffect((dataDate) => {
                   Lama Sewa
                 </p>
                 <div class="flex items-cente w-full">
-                  <input type="text" name="lama_sewa" id="lama_sewa"  class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500 w-8 mr-2" /> 
-                  <p class="self-center">
-                    Hari
-                  </p>
+                  <div class="flex">
+                    <Icon name="octicon:plus-16" size="28" class="self-center mr-2" />
+                    <input type="text" class="w-full rounded-md" :value="data.jumlah_hari">
+                    <Icon name="majesticons:minus" size="28" class="self-center ml-2" />
+                  </div>
                 </div>
               </div>
-              <div class="basis-2/12 self-center">
-                <Icon name="bi:trash-fill" class="mr-3 self-center text-red-500" />
+              <div @click="deleteCart(data.id_cart)" class="basis-2/12 self-center cursor-pointer">
+                <Icon name="bi:trash-fill" class="mr-1 self-center text-red-500" />
                 <span class="text-md font-semibold self-center text-red-500">Hapus</span>
               </div>
             </div>
@@ -66,16 +136,18 @@ watchEffect((dataDate) => {
                   Jumlah Alat
                 </p>
                 <p class="text-md text-gray-400">
-                  1 Alat
+                  {{ cart.data.length }} Alat
                 </p>
               </div>
-              <div class="flex justify-between">
-                <p class="text-md text-gray-400">
-                  Camera EOS Canon 700D
-                </p>
-                <p class="text-md text-gray-400">
-                  3 Hari
-                </p>
+              <div>
+                <div v-for="alat in cart.data" class="flex justify-between">
+                  <p class="text-md text-gray-400">
+                    {{ alat.nama }}
+                  </p>
+                  <p class="text-md text-gray-400">
+                    {{ alat.jumlah_hari }} Hari
+                  </p>
+                </div>
               </div>
             </div>
             <div class="flex justify-between">
@@ -83,11 +155,11 @@ watchEffect((dataDate) => {
                 Total Harga
               </p>
               <p class="text-lg font-semibold">
-                Rp. 375.000
+                Rp. {{ totalHarga() }} K
               </p>
             </div>
             <div class="w-full">
-              <button class="bg-orange-400 text-white font-semibold w-full rounded-md px-4 py-2 mt-4">
+              <button @click="checkout" class="bg-orange-400 text-white font-semibold w-full rounded-md px-4 py-2 mt-4">
                 <Icon name="ic:twotone-shopping-cart-checkout" class="mr-3" />
                 <span>Checkout</span>
               </button>

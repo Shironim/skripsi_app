@@ -2,7 +2,8 @@
 import { inject } from 'vue'
 
 let {isChatActive} = inject('chat')
-
+let { setToken, token } = inject('jwtToken')
+console.log('layout token :', token.value)
 // watchEffect(() => {
 //   console.log(isChatActive.value)
 // })

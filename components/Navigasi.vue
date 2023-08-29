@@ -1,7 +1,8 @@
 <script setup>
-  import { inject } from 'vue'
+import { inject } from 'vue'
 
-  let {toogle} = inject('chat')
+let { toogle } = inject('chat')
+let { namaUser } = inject('namaUser')
 
 </script>
 <template>
@@ -17,16 +18,26 @@
           <div class="flex justify-center border-r-2 border-r-black">
             <div class="self-center">
               <NuxtLink to="/keranjang">
-                <Icon name="material-symbols:shopping-cart" size="28" class="text-slate-800 mx-2"></Icon>
+                <span>
+                  <Icon name="material-symbols:shopping-cart" size="28" class="text-slate-800 mx-2"></Icon>
+                </span>
               </NuxtLink>
-              <Icon @click="toogle" name="material-symbols:android-messages" size="28" class="text-slate-800 mx-2 cursor-pointer"></Icon>
+              <span>
+                <Icon @click="toogle" name="material-symbols:android-messages" size="28"
+                  class="text-slate-800 mx-2 cursor-pointer"></Icon>
+              </span>
             </div>
           </div>
           <div class="flex">
-            <div class="self-center ml-3">
+            <div class="self-center ml-3 mr-2">
               <Icon name="carbon:user-avatar-filled" size="28" class="text-slate-800"></Icon>
             </div>
-            <span class="self-center ml-2">Dimas Seto</span>
+            <span v-if="namaUser" class="self-center ml-2">{{ namaUser }}</span>
+            <NuxtLink v-if="!namaUser" to="/login">
+              <button class="border rounded-md px-2 py-1">
+                Login
+              </button>
+            </NuxtLink>
           </div>
         </div>
       </div>
