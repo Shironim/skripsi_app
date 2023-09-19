@@ -1,8 +1,25 @@
 <script setup>
 import { inject } from 'vue'
-
+//  inject chat
 let { toogle } = inject('chat')
-let { namaUser } = inject('namaUser')
+const baseApiUrl = useRuntimeConfig().public.BASE_API_URL;
+const token = useCookie('token')
+const nama = ref('')
+const { data, error } = await useFetch(`${baseApiUrl}/user`, {
+  onRequest({ options }) {
+    // Set the request headers
+    options.headers = options.headers || {}
+    options.headers.authorization = `Bearer ${token.value}`
+  },
+})
+watchEffect(()=>{
+  if (error.value != null) {
+    console.log('error :', error.value)
+  }
+  if (data.value != null) {
+    nama.value = data.value.data[0].nama_depan
+  }
+})
 
 </script>
 <template>
@@ -32,8 +49,8 @@ let { namaUser } = inject('namaUser')
             <div class="self-center ml-3 mr-2">
               <Icon name="carbon:user-avatar-filled" size="28" class="text-slate-800"></Icon>
             </div>
-            <span v-if="namaUser" class="self-center ml-2">{{ namaUser }}</span>
-            <NuxtLink v-if="!namaUser" to="/login">
+            <span v-if="nama" class="self-center ml-2">{{ nama }}</span>
+            <NuxtLink v-if="!nama" to="/login">
               <button class="border rounded-md px-2 py-1">
                 Login
               </button>

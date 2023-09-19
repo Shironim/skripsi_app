@@ -2,60 +2,48 @@
 defineProps({
   dataProduct: {
     type: Array,
-    required: true
+    required: true,
+    default: []
   }
 })
 import { useToast } from 'tailvue'
-let { idUser } = inject('idUser')
+
 const baseApiUrl = useRuntimeConfig().public.BASE_API_URL;
+const token = useCookie('token')
 
 const $toast = useToast()
-const alertDisewa = () => {
+const alert = (type, msg) => {
   // Use sweetalert2
   $toast.show({
-    type: 'danger',
-    message: 'Alat ini sedang disewa',
-    timeout: 3,
-  });
-}
-const alertKeranjang = () => {
-  // Use sweetalert2
-  $toast.show({
-    type: 'success',
-    message: 'Berhasil ditambahkan ke keranjang',
-    timeout: 3,
-  });
-}
-const alertLogin = () => {
-  // Use sweetalert2
-  $toast.show({
-    type: 'info',
-    message: 'Anda belum login',
+    type: type,
+    message: msg,
     timeout: 3,
   });
 }
 const addKeranjang = async (id_produk) => {
-  if (idUser.value) {
-    try {
-      await $fetch(`${baseApiUrl}/addcart`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(
-          {
-            id_user: idUser.value,
-            id_produk: id_produk,
-          })
-      })
-      alertKeranjang()
-    } catch (error) {
-      console.log(error)
+  try {
+    const { error } = useLazyFetch(`${baseApiUrl}/addcart`, {
+      onRequest({ options }) {
+        // Set the request headers
+        options.headers = options.headers || {}
+        options.headers.authorization = `Bearer ${token.value}`
+      },
+      method: 'POST',
+      body: JSON.stringify(
+        {
+          id_produk: id_produk,
+        })
+    })
+    if (!error) {
+      alert('success', 'Berhasil ditambahkan ke keranjang')
+    } else {
+      if (error.value?.statusCode == 401) {
+        alert('danger', 'Silahkan login terlebih dahulu')
+      }
     }
-  }else{
-    alertLogin()
+  } catch (error) {
+    console.log('log error', error)
   }
-
 }
 
 </script>
@@ -63,8 +51,8 @@ const addKeranjang = async (id_produk) => {
   <div v-for="(camera, index) in dataProduct" :key="index" class="basis-1/4 ">
     <div class="border rounded-md mr-3 mb-3 overflow-hidden">
       <figure>
-        <NuxtImg :src="`${baseApiUrl}/${camera.thumbnail}`" :alt="camera.nama" class="mx-auto h-[180px]"
-          height="180px" width="100%" fit="cover" />
+        <NuxtImg :src="`${baseApiUrl}/${camera.thumbnail}`" :alt="camera.nama" class="mx-auto h-[180px]" height="180px"
+          width="100%" fit="cover" />
       </figure>
       <figcaption class="flex flex-col">
         <div class="p-4">
@@ -84,7 +72,7 @@ const addKeranjang = async (id_produk) => {
             <Icon name="ic:baseline-shopping-cart" class="mx-2"></Icon>
             <span>Simpan</span>
           </button>
-          <button v-if="camera.status == 'disewa'" @click="alertDisewa"
+          <button v-if="camera.status == 'disewa'" @click="alert('danger', 'Kamera sedang disewa')"
             class="basis-1/2 hover:bg-red-400 hover:text-white p-2 w-full text-md">
             <Icon name="tabler:camera-x" class="mx-2"></Icon>
             <span>Disewa</span>

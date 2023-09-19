@@ -1,60 +1,52 @@
-<script setup>
+<script setup >
 definePageMeta({
   layout: 'single',
 })
-import { useToast, useModal } from 'tailvue'
+import { useToast } from 'tailvue'
 const baseApiUrl = useRuntimeConfig().public.BASE_API_URL;
-const email = ref('')
-const password = ref('')
-let { setId, idUser } = inject('idUser')
-let { setNama, namaUser } = inject('namaUser')
+const user = reactive({
+  email: '',
+  password: '',
+})
 const route = useRouter();
 const $toast = useToast()
-const $modal = useModal()
-const loginSuccess = () => {
+const token = useCookie('token')
+
+const alert = (type, msg) => {
   // Use sweetalert2
   $toast.show({
-    type: 'success',
-    message: 'Login Berhasil',
+    type: type,
+    message: msg,
     timeout: 3,
   });
-}
-const loginFail = () => {
-  // Use sweetalert2
-  $toast.show({
-    type: 'danger',
-    message: 'Login Gagal',
-    timeout: 3,
-  });
-}
-// alert login gagal 
-// check login berhasil
-const loginUser = async () => {
-  try {
-    const response = await $fetch(`${baseApiUrl}/login`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email: email.value,
-        password: password.value,
-      }),
-    });
-    console.log('respo :', response[0].id_user)
-    // setToken(response)
-    loginSuccess()
-    setId(response[0].id_user)
-    setNama(response[0].nama_depan)
-    route.push('/')
-  } catch (error) {
-    loginFail()
-    console.log('error :', error)
-  }
 }
 
-if (idUser.value) {
-  route.push('/')
+
+const loginUser = async () => {
+  const { error } = await useLazyFetch(`${baseApiUrl}/login`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      email: user.email,
+      password: user.password,
+    }),
+    onResponse: (res) => {
+      if (res.response.status == 200) {
+        // console.log('res :', res)
+        token.value = res.response._data.token
+        // console.log('token :', token.value)
+        // localStorage.setItem('token', response.token)
+        alert('success', 'Berhasil masuk')
+        route.push('/')
+      }
+    },
+  });
+  if (error.value != null) {
+    alert('danger', 'Gagal masuk')
+    console.log('error :', error.value)
+  }
 }
 </script>
 
@@ -70,13 +62,13 @@ if (idUser.value) {
           <form class="space-y-4 md:space-y-2" @submit.prevent="loginUser" method="post">
             <div>
               <label for="email" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Email</label>
-              <input type="email" v-model="email" name="email" id="email" required
+              <input type="email" v-model="user.email" name="email" id="email" required
                 class="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                 placeholder="john@mail.com">
             </div>
             <div class="pb-4">
               <label for="password" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Password</label>
-              <input type="password" v-model="password" name="password" id="password" placeholder="••••••••" required
+              <input type="password" v-model="user.password" name="password" id="password" placeholder="••••••••" required
                 class="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
             </div>
             <button type="submit"
@@ -88,7 +80,6 @@ if (idUser.value) {
                 class="font-medium text-primary-600 hover:underline dark:text-primary-500">Sign up</a>
             </p>
           </form>
-
         </div>
       </div>
     </div>

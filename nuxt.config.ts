@@ -7,11 +7,14 @@ export default defineNuxtConfig({
     'nuxt-icon',
     '@tailvue/nuxt',
   ],
+
   ssr: false,
+
   alias: {
     '@assets': '/assets',
     '@plugins': '/plugins',
   },
+
   css: [
     '@/assets/stylesheets/index.scss'
   ],
@@ -21,6 +24,7 @@ export default defineNuxtConfig({
       BASE_API_URL: 'http://localhost:5000',
     }
   },
+
   googleFonts: {
     families: {
       Roboto: true,
@@ -34,10 +38,16 @@ export default defineNuxtConfig({
     display: 'swap',
     prefetch: false,
     preconnect: false,
-    preload: true
+    preload: false,
+    download: true,
+    base64: false,
   },
+
   build: {
     transpile: ['@vuepic/vue-datepicker']
   },
 
+  devtools: {
+    enabled: false,
+  },
 })

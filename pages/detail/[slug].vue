@@ -1,27 +1,69 @@
 <script setup>
-// route for detail route info
+import { useToast } from 'tailvue'
 const baseApiUrl = useRuntimeConfig().public.BASE_API_URL;
+const token = useCookie('token')
+// route for detail route info
 const route = useRoute();
+const $toast = useToast()
+const alert = (type, msg) => {
+  // Use sweetalert2
+  $toast.show({
+    type: type,
+    message: msg,
+    timeout: 3,
+  });
+}
+// fetch all camera
 const allCamera = await $fetch(`${baseApiUrl}/produk`).catch((error) => error.data);
-const camera = await $fetch(`${baseApiUrl}/produk/${route.params.slug}`).catch((error) => error.data);
-const spesifikasi = JSON.parse(camera.data[0].spesifikasi_detail);
 
-const rekomendasi = allCamera.data.filter((recomen)=>{
-  return recomen.type_produk == camera.data[0].type_produk
+const { data: camera, error } = await useAsyncData(
+  'camera',
+  () => $fetch(`/produk/${route.params.slug}`, {
+    method: 'GET',
+    baseURL: `${baseApiUrl}`,
+  }), {
+  watch: [
+    route,
+  ]
+});
+// const camera = await $fetch(`${baseApiUrl}/produk/${route.params.slug}`).catch((error) => error.data);
+
+const spesifikasi = JSON.parse(camera.value.data[0].spesifikasi_detail);
+
+const rekomendasi = allCamera.data.filter((recomen) => {
+  return recomen.type_produk == camera.value.data[0].type_produk
 })
 
-const addKeranjang = async () => {
-  await $fetch(`${baseApiUrl}/user/addcart`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(
-      {
-      id_user : '1',
-      id_produk : '2',
+watchEffect(() => {
+  if (error.value != null) {
+    console.log('error :', error.value)
+  }
+})
+
+const addKeranjang = async (id_produk) => {
+  try {
+    const { error } = useLazyFetch(`${baseApiUrl}/addcart`, {
+      onRequest({ options }) {
+        // Set the request headers
+        options.headers = options.headers || {}
+        options.headers.authorization = `Bearer ${token.value}`
+      },
+      method: 'POST',
+      body: JSON.stringify(
+        {
+          id_produk: id_produk,
+        })
     })
-  })
+    if (!error) {
+      alert('success', 'Berhasil ditambahkan ke keranjang')
+    } else {
+      if (error.value?.statusCode == 401) {
+        alert('danger', 'Silahkan login terlebih dahulu')
+      }
+    }
+  } catch (error) {
+    console.log('log error', error)
+  }
 }
 
 </script>
@@ -118,8 +160,10 @@ const addKeranjang = async () => {
               <div class="pb-2">
                 <div class="flex justify-between">
                   <p class="text-md self-center">Status</p>
-                  <p v-if="camera.data[0].status == 'tersedia'" class="text-md bg-green-400 px-3 py-1 rounded-lg font-semibold text-white">Tersedia</p>
-                  <p v-if="camera.data[0].status == 'disewa'" class="text-md bg-red-400 px-3 py-1 rounded-lg font-semibold text-white">Disewa</p>
+                  <p v-if="camera.data[0].status == 'tersedia'"
+                    class="text-md bg-green-400 px-3 py-1 rounded-lg font-semibold text-white">Tersedia</p>
+                  <p v-if="camera.data[0].status == 'disewa'"
+                    class="text-md bg-red-400 px-3 py-1 rounded-lg font-semibold text-white">Disewa</p>
                 </div>
               </div>
               <div class="flex justify-between">
@@ -127,10 +171,24 @@ const addKeranjang = async () => {
                 <p class="text-md font-semibold">{{ camera.data[0].harga }} K / Day</p>
               </div>
             </div>
+            <div class="flex flex-col gap-y-4 mb-2">
+              <button type="button"
+                class="btn border font-semibold rounded-md  text-white px-2 py-1"
+                :class="camera.data[0].status == 'disewa' ? 'bg-red-400' : 'bg-orange-400'">
+                <div v-if="camera.data[0].status == 'tersedia'" @click="addKeranjang(camera.data[0].id_produk)">
+                  <Icon name="ion:cart" size="24px"></Icon>
+                  <span class="self-center ml-2">Simpan</span>
+                </div>
+                <div v-else>
+                  <!-- <Icon name="ion:cart" size="24px"></Icon> -->
+                  <span class="self-center ml-2">Masih Disewa</span>
+                </div>
+              </button>
+            </div>
             <div class="flex flex-col gap-y-4">
-              <button @click="addKeranjang" class="btn border font-semibold rounded-md bg-orange-400 text-white px-2 py-1">
+              <button class="btn border font-semibold rounded-md bg-green-400 text-white px-2 py-1">
                 <Icon name="ion:cart" size="24px"></Icon>
-                <span class="self-center ml-2">Simpan</span>
+                <span class="self-center ml-2">Tanya Chatbot</span>
               </button>
             </div>
           </div>
@@ -156,4 +214,5 @@ const addKeranjang = async () => {
         <ComponentProduct :dataProduct="rekomendasi" />
       </div>
     </div>
-</section></template>
+  </section>
+</template>
