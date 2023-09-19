@@ -46,37 +46,34 @@ const addKeranjang = async (id_produk) => {
   }
 }
 
+const uppercaseFirstLetter = (title) => {
+  const split = title.split('_')
+  for (let i = 0; i < split.length; i++) {
+    split[i] = split[i][0].toUpperCase() + split[i].substr(1);
+  }
+  return split.join(' ')
+}
 </script>
 <template>
-  <div v-for="(camera, index) in dataProduct" :key="index" class="basis-1/4 ">
+  <div v-for="(produk, index) in dataProduct" :key="index" class="basis-1/4 ">
     <div class="border rounded-md mr-3 mb-3 overflow-hidden">
       <figure>
-        <NuxtImg :src="`${baseApiUrl}/${camera.thumbnail}`" :alt="camera.nama" class="mx-auto h-[180px]" height="180px"
+        <NuxtImg :src="`${baseApiUrl}/${produk.thumbnail}`" :alt="produk.nama" class="mx-auto h-[180px]" height="180px"
           width="100%" fit="cover" />
       </figure>
       <figcaption class="flex flex-col">
         <div class="p-4">
-          <h1 class="text-md">{{ camera.nama }}</h1>
-          <p class="text-lg font-bold">Rp. {{ camera.harga }}K /Day</p>
+          <h1 class="text-md">{{ produk.nama }}</h1>
+          <p class="text-lg font-bold">Rp. {{ produk.harga }}K /Day</p>
         </div>
         <div class="flex border-t">
-          <NuxtLink :to="`/detail/${camera.id_produk}`"
-            class="basis-1/2 transition-all hover:bg-orange-400 hover:text-white">
+          <NuxtLink :to="`/detail/${produk.id_produk}`"
+            class="basis-full transition-all hover:bg-orange-400 hover:text-white">
             <button class="p-2 w-full text-md">
               <Icon name="tabler:camera-search" class="mx-2"></Icon>
-              <span>Detail</span>
+              <span>Detail {{ uppercaseFirstLetter(produk.type_produk) }}</span>
             </button>
           </NuxtLink>
-          <button v-if="camera.status == 'tersedia'" @click="addKeranjang(camera.id_produk)"
-            class="basis-1/2 hover:bg-red-400 hover:text-white p-2 w-full text-md">
-            <Icon name="ic:baseline-shopping-cart" class="mx-2"></Icon>
-            <span>Simpan</span>
-          </button>
-          <button v-if="camera.status == 'disewa'" @click="alert('danger', 'Kamera sedang disewa')"
-            class="basis-1/2 hover:bg-red-400 hover:text-white p-2 w-full text-md">
-            <Icon name="tabler:camera-x" class="mx-2"></Icon>
-            <span>Disewa</span>
-          </button>
         </div>
       </figcaption>
     </div>
