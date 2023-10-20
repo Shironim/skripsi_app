@@ -1,23 +1,75 @@
 <script setup>
-import { inject } from 'vue'
+import { inject } from "vue";
 
-const { isChatActive } = inject('chat')
-const { toogle } = inject('chat')
+const { isChatActive } = inject("chat");
+const { toogle } = inject("chat");
+const historyChat = reactive([
+  {
+    bot: false,
+    message: "Hi, Selamat siang",
+  },
+  {
+    bot: true,
+    message: "Selamat datang, boleh dijelaskan apa kebutuhannya ?",
+  },
+]);
+const inputChat = ref("");
+const baseApiUrl = useRuntimeConfig().public.API_RASA;
 
+const submitInput = async () => {
+  try {
+    const upload = {
+      sender: "user",
+      message: inputChat.value,
+    };
+    const { error, data } = await useFetch(
+      `http://localhost:5005/webhooks/rest/webhook`,
+      {
+        method: "POST",
+        body: upload,
+      }
+    );
+    historyChat.push({
+      bot: false,
+      message: inputChat.value,
+    });
+    if (data.value.length == 1) {
+      historyChat.push({
+        bot: true,
+        message: data.value[0].text,
+      });
+    } else if (data.value.length > 1) {
+      for (let index = 0; index < data.value.length; index++) {
+        historyChat.push({
+          bot: true,
+          message: data.value[index].text,
+        });
+      }
+    }
+    inputChat.value = "";
+  } catch (error) {
+    console.log("log error", error);
+  }
+};
 </script>
 <template>
-  <div v-if="isChatActive" class="fixed min-w-[341px] bg-white border border-slate-400 overflow-hidden">
+  <div
+    v-if="isChatActive"
+    class="fixed min-w-[341px] bg-white border border-slate-400 overflow-hidden"
+  >
     <div class="w-full relative h-screen">
       <header class="flex flex-row p-3">
         <div class="flex">
           <figure class="self-center mr-2">
             <!-- <img src="" alt=""> -->
-            <Icon name="fluent:bot-24-filled" size="30" class="text-green-400"></Icon>
+            <Icon
+              name="fluent:bot-24-filled"
+              size="30"
+              class="text-green-400"
+            ></Icon>
           </figure>
           <div class="flex flex-col self-center">
-            <p class="font-semibold">
-              Chatbot
-            </p>
+            <p class="font-semibold">Chatbot</p>
             <span class="text-xs">Online</span>
           </div>
         </div>
@@ -26,7 +78,16 @@ const { toogle } = inject('chat')
         </div>
       </header>
       <main class="bg-slate-100 h-screen overflow-auto p-4">
-        <div class="flex mb-4 odd:justify-start">
+        <div
+          v-for="(data, index) in historyChat"
+          class="flex mb-4"
+          :class="data.bot ? 'even:justify-end' : ''"
+        >
+          <p class="text-xs w-3/4 bg-white pl-3 pr-4 py-2 rounded-md">
+            {{ data.message }}
+          </p>
+        </div>
+        <!-- <div class="flex mb-4 odd:justify-start">
           <p class="text-xs w-3/4 bg-white pl-3 pr-4 py-2 rounded-md">
             Hi, Selamat siang
           </p>
@@ -55,13 +116,17 @@ const { toogle } = inject('chat')
           <p class="text-xs w-3/4 bg-white pl-3 pr-4 py-2 rounded-md">
             Siap, saya siap membantu
           </p>
-        </div>
+        </div> -->
       </main>
       <footer class="absolute bottom-0 w-full">
         <div class="flex flex-row">
-          <input type="text" class="w-full border-none focus:outline-none focus:ring-1 focus:ring-transparent"
-            placeholder="Tanyakan pada chatbot" />
-          <button class="p-2 bg-green-400">
+          <input
+            type="text"
+            v-model="inputChat"
+            class="w-full border-none focus:outline-none focus:ring-1 focus:ring-transparent"
+            placeholder="Tanyakan pada chatbot"
+          />
+          <button @click="submitInput" class="p-2 bg-green-400">
             <Icon name="material-symbols:send" class="text-white"></Icon>
           </button>
         </div>

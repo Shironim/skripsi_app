@@ -19,7 +19,7 @@ useHead({
 // }
 
 const kategori = ref('')
-const search = ref('')
+
 const changeKategori = (val) => {
   // console.log('changekatgeori called')
   // console.log('val :', val)
@@ -47,12 +47,14 @@ const data = computed(() => {
       return data.type_produk == kategori.value
     })
     // check if search is not empty
-  } else if (search.value) {
-    return camera.value.data.filter((data) => {
-      return data.nama.toLowerCase().includes(search.value.toLowerCase())
-    })
-    // if all empty then return all data
-  } else {
+  } 
+  // else if (search.value) {
+  //   return camera.value.data.filter((data) => {
+  //     return data.nama.toLowerCase().includes(search.value.toLowerCase())
+  //   })
+  // } 
+  // if all empty then return all data
+  else {
     return camera.value.data
   }
 })
@@ -70,7 +72,6 @@ watchEffect(()=>{
 <template>
   <ParallaxBanner />
   <Categories @change-kategori="changeKategori" />
-  <Search v-model="search" />
   <section class="md:max-w-5xl mx-auto px-4">
     <div class="mb-12">
       <div class="flex flex-row flex-wrap">
