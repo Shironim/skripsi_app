@@ -34,10 +34,7 @@ const loginUser = async () => {
     }),
     onResponse: (res) => {
       if (res.response.status == 200) {
-        // console.log('res :', res)
         token.value = res.response._data.token
-        // console.log('token :', token.value)
-        // localStorage.setItem('token', response.token)
         alert('success', 'Berhasil masuk')
         route.push('/')
       }

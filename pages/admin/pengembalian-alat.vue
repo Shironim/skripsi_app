@@ -5,7 +5,6 @@ definePageMeta({
 
 import { useDateFormat } from "@comps/useDateFormat";
 import { useUtils } from "@comps/useUtils";
-import { usePagination } from "@comps/usePagination";
 
 const baseApiUrl = useRuntimeConfig().public.BASE_API_URL;
 
@@ -49,7 +48,6 @@ const changeStatus = (e) => {
   pengembalianStatus.value = e.target.value;
 };
 const selectFile = (e) => {
-  console.log(e.target.files[0].name);
   fileInput.value = e.target.files[0];
 };
 const status = (status) => {
@@ -183,13 +181,6 @@ const endIndex = computed(() => {
   }
 });
 
-watchEffect(() => {
-  // console.log("pengembalianStatus : ", pengembalianStatus.value);
-  // console.log("kodeInvoice : ", kodeInvoice.value);
-  // console.log("stats : ", stats.value);
-  // console.log("fileInput : ", fileInput.value);
-  console.log("fetchProduk : ", fetchProduk.value);
-});
 </script>
 
 <template>

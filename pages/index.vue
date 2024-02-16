@@ -83,13 +83,8 @@ watchEffect(() => {
   if (error.value != null) {
     console.log("error /produk : ", error.value);
   }
-  console.log("baseApiUrl", baseApiUrl)
 });
-// console.log("filteredList : ", filteredList.value);
-// console.log("kategori : ", kategori.value);
-// if (error) {
-//   console.log('error /produk : ', error.value)
-// }
+
 </script>
 <template>
   <ParallaxBanner />

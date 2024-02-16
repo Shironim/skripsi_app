@@ -2,9 +2,7 @@
 import { inject } from "vue";
 
 let { isChatActive } = inject("chat");
-// watchEffect(() => {
-//   console.log(isChatActive.value)
-// })
+
 </script>
 <template>
   <div class="relative">

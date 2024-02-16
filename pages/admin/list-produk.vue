@@ -3,14 +3,10 @@ definePageMeta({
   layout: "admin",
 });
 import { useToast } from "tailvue";
-import { usePagination } from "@comps/usePagination";
 import { useFormatCurrency } from "@comps/useFormatCurrency";
 
-const route = useRouter();
 const $toast = useToast();
-let { idUser } = inject("idUser");
 const baseApiUrl = useRuntimeConfig().public.BASE_API_URL;
-const dataDate = ref();
 
 const page = ref(1);
 const limit = ref(5);
@@ -83,7 +79,6 @@ const loadProduct = async () => {
 };
 
 const showModal = (status, slug) => {
-  console.log("showModal called");
   modalShow.value = true;
   stats.value = status;
   slugUrl.value = slug;
@@ -152,23 +147,6 @@ const changeLimit = (e) => {
   page.value = 1;
 };
 
-// watchEffect(() => {
-//   // console.log("produk : ", produk.value.data.length);
-//   console.log("list : ", list.value.length);
-//   console.log("page : ", page.value);
-//   // console.log("limit : ", limit.value);
-//   // console.log("produk : ", produk.value.data.length);
-//   console.log(
-//     "searchProduct : ",
-//     searchProduct.value !== "" && searchProduct.value !== undefined
-//   );
-//   console.log("startIndex : ", startIndex.value);
-//   console.log("endIndex : ", endIndex.value);
-//   console.log("totalPage : ", totalPage.value);
-//   console.log("filterProduct : ", filterProduct.value.length);
-//   // console.log("totalPage : ", totalPage.value);
-//   // console.log("totalListProduk : ", totalListProduk.value);
-// });
 </script>
 
 <template>

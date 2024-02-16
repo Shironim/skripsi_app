@@ -113,9 +113,6 @@ const addProductToCart = async (produk) => {
   }
 };
 
-watchEffect(() => {
-  console.log(productSearch.value);
-});
 </script>
 <template>
   <div

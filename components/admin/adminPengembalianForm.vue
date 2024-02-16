@@ -53,11 +53,6 @@ const baseApiImg = useRuntimeConfig().public.IMAGE_URL;
 
 const isVisible = ref(false);
 
-// watchEffect(() => {
-//   console.log("data dataProduk : ", props.dataProduk);
-//   console.log("dataForm", props.dataForm);
-// });
-
 const setStatus = (stats) => {
   let status = "";
   switch (stats) {

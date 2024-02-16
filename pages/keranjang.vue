@@ -35,9 +35,6 @@ const { data: cart, error: errrGetCart, refresh } = await useFetch(`${baseApiUrl
 })
 
 const updateCart = async (update, id, jumlah_hari) => {
-  // console.log('update :', update)
-  // console.log('id :', id)
-  // console.log('jumlah_hari :', jumlah_hari)
   if (update == 'add') {
     const { error } = useLazyFetch(`${baseApiUrl}/updatecart`, {
       method: 'PATCH',
@@ -92,7 +89,6 @@ const toDate = (inputDate) => {
 }
 const getDate = (date, index) => {
   rangeReservation.value[index] = date
-  console.log('getDate', rangeReservation.value)
 }
 const updateDate = (e, id) => {
   const { error } = useLazyFetch(`${baseApiUrl}/tanggalsewa`, {
@@ -161,12 +157,9 @@ const checkout = async () => {
 }
 
 watchEffect(() => {
-  // console.log('cart', cart.value.data)
-  // console.log('camera', camera.value)
   if (errrGetCart.value != null) {
     console.log('errrGetCart :', errrGetCart.value)
   }
-  console.log('rangeReservation', rangeReservation.value)
 })
 
 </script>

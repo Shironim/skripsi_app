@@ -51,7 +51,6 @@ const changeStatus = (e) => {
   invoiceStatus.value = e.target.value;
 };
 const selectFile = (e) => {
-  console.log(e.target.files[0].name);
   fileInput.value = e.target.files[0];
 };
 
@@ -136,7 +135,6 @@ const loadTransaksi = async () => {
 };
 
 const showModal = async (status, invoice) => {
-  console.log("showModal called");
   modalShow.value = true;
   stats.value = status;
   kodeInvoice.value = invoice;
@@ -197,13 +195,6 @@ const changeLimit = (e) => {
   page.value = 1;
 };
 
-// watchEffect(() => {
-//   console.log("search : ", search.value);
-//   console.log("searchInvoice : ", searchInvoice.value);
-//   console.log("invoice : ", invoice.value);
-//   console.log("kodeInvoice : ", kodeInvoice.value);
-//   console.log("fetchProduct : ", fetchProduk.value);
-// });
 </script>
 
 <template>

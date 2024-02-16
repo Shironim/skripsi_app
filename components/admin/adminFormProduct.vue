@@ -152,10 +152,6 @@ const handleAddProduk = async () => {
   }
 };
 
-watchEffect(() => {
-  console.log("selectedCategory", selectedCategory.value);
-  console.log("kategori", props.kategori);
-});
 </script>
 <template>
   <form

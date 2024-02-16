@@ -186,10 +186,7 @@ const options = ref({
   responsive: true,
   maintainAspectRatio: false,
 });
-watchEffect(() => {
-  console.log("incomePerMonth", incomePerMonth.value.data);
-  console.log("thisMonth", thisMonth);
-});
+
 </script>
 
 <template>
