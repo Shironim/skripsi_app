@@ -52,11 +52,6 @@ const { capitalizeFirstLetter } = useUtils();
 const { toDate } = useDateFormat();
 const { formatCurrencyIDR } = useFormatCurrency();
 
-watchEffect(() => {
-  // console.log("data admin : ", props.dataForm.produk instanceof Array);
-  // console.log("dataForm", props.dataForm);
-});
-
 const setStatus = (stats) => {
   let status = "";
   switch (stats) {
