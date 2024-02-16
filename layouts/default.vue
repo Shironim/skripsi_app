@@ -1,7 +1,7 @@
 <script setup>
-import { inject } from 'vue'
+import { inject } from "vue";
 
-let { isChatActive } = inject('chat')
+let { isChatActive } = inject("chat");
 // watchEffect(() => {
 //   console.log(isChatActive.value)
 // })
@@ -9,14 +9,15 @@ let { isChatActive } = inject('chat')
 <template>
   <div class="relative">
     <div class="flex">
-      <div :class="isChatActive ? 'basis-9/12' : 'basis-full'">
+      <div class="basis-full">
         <Navigasi />
-        <slot />
-      </div>
-      <div :class="isChatActive ? 'basis-3/12' : 'hidden'">
-        <ChatContainer />
+        <div class="min-h-screen">
+          <slot />
+        </div>
+        <Footer />
       </div>
     </div>
+    <ChatContainer /> 
     <ChatToogle />
   </div>
 </template>

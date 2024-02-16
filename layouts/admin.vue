@@ -12,7 +12,9 @@ onMounted(() => {
   <AdminNavbar />
   <AdminSidebar />
   
-  <div class="p-4 sm:ml-64 mt-12 bg-slate-50 h-screen">
-    <slot />
+  <div class="p-4 sm:ml-64 mt-12 bg-slate-50 min-h-screen">
+    <div class="max-w-7xl mx-auto">
+      <slot />
+    </div>
   </div>
 </template>
