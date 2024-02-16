@@ -1,421 +1,396 @@
 <script setup>
 definePageMeta({
-  layout: 'admin',
-})
-import { useToast } from 'tailvue'
+  layout: "admin",
+});
+import { useToast } from "tailvue";
+import { usePagination } from "@comps/usePagination";
+import { useFormatCurrency } from "@comps/useFormatCurrency";
+
 const route = useRouter();
-const $toast = useToast()
-let { idUser } = inject('idUser')
+const $toast = useToast();
+let { idUser } = inject("idUser");
 const baseApiUrl = useRuntimeConfig().public.BASE_API_URL;
 const dataDate = ref();
-const { data: produk, error, pending, refresh } = await useFetch(`${baseApiUrl}/produk`).catch((error) => error.data);
+
+const page = ref(1);
+const limit = ref(5);
+
+const {
+  data: produk,
+  pending,
+  error,
+  refresh,
+} = await useFetch(`/produk`, {
+  query: { page, limit },
+  method: "GET",
+  baseURL: baseApiUrl,
+});
+
 const alertDelete = () => {
   // Use sweetalert2
   $toast.show({
-    type: 'danger',
-    message: 'Berhasil dihapus',
+    type: "danger",
+    message: "Berhasil dihapus",
     timeout: 3,
   });
-}
+};
 const alertCheckout = () => {
   // Use sweetalert2
   $toast.show({
-    type: 'success',
-    message: 'Berhasil Checkout',
+    type: "success",
+    message: "Berhasil Checkout",
     timeout: 3,
   });
-}
-const fileInput = ref();
-const modalShow = ref(false);
-const kategori = ref('');
+};
+const { formatCurrencyIDR } = useFormatCurrency();
 
-const dispKategori = computed(() => {
-  switch (kategori.value) {
-    case 'kamera_foto':
-      return 'Kamera Foto';
-    case 'kamera_video':
-      return 'Kamera Video';
-    case 'lensa':
-      return 'Lensa';
-    case 'tv_monitor':
-      return 'TV/Monitors';
-    case 'tripod':
-      return 'Tripod';
-    default:
-      return 'Belum dipilih';
+const modalShow = ref(false);
+const stats = ref("");
+const slugUrl = ref();
+const fetchData = ref();
+const kategori = ref();
+const spesifikasi = ref();
+const searchProduct = ref();
+
+const deleteProduk = async (idProduk) => {
+  console.log("deleteProduk called");
+  try {
+    await $fetch(`${baseApiUrl}/produk`, {
+      method: "DELETE",
+      body: {
+        idProduk,
+      },
+    }).then((res) => {
+      console.log(res);
+      refresh();
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+const loadProduct = async () => {
+  console.log("loadProduct called");
+  // Menggunakan useLazyAsyncData untuk memuat data produk secara malas (lazy)
+  const { pending, data } = await useLazyAsyncData("data", () =>
+    $fetch(`${baseApiUrl}/produk/${slugUrl.value}`)
+  );
+  if (!pending.value) {
+    fetchData.value = data?.value?.data[0];
+    kategori.value = data?.value?.data[0].type_produk;
+    spesifikasi.value = JSON.parse(data?.value?.data[0].spesifikasi_detail);
+  }
+};
+
+const showModal = (status, slug) => {
+  console.log("showModal called");
+  modalShow.value = true;
+  stats.value = status;
+  slugUrl.value = slug;
+  if (status !== "add") {
+    return loadProduct();
+  }
+  if (fetchData.value !== null && status === "add") {
+    fetchData.value = {};
+    kategori.value = "";
+    spesifikasi.value = {};
+  }
+};
+
+const closeModal = () => {
+  modalShow.value = false;
+  fetchData.value = {};
+  stats.value = "";
+  refresh();
+};
+const changeCategory = () => {
+  spesifikasi.value = {};
+};
+
+const list = computed(() => {
+  return produk.value.data.slice(startIndex.value, endIndex.value);
+});
+
+const filterProduct = computed(() => {
+  if (searchProduct.value !== "" && searchProduct.value !== undefined) {
+    return produk.value.data.filter((fil) =>
+      fil.nama.toString().toLowerCase().includes(searchProduct.value)
+    );
+  }
+  return list.value;
+});
+
+const totalListProduk = computed(() => {
+  if (searchProduct.value !== "" && searchProduct.value !== undefined) {
+    return filterProduct.value.length;
+  } else {
+    return produk.value.data?.length;
   }
 });
 
-
-const dataForm = reactive({})
-const spesifikasi = ref({})
-
-const changeCategori = (value) => {
-  kategori.value = value;
-  spesifikasi.value = {}
-}
-const changeFile = (event) => {
-  fileInput.value = event.target.files[0];
-}
-watchEffect(() => {
-  console.log('ini file', fileInput.value)
-})
-const handleAddProduk = async () => {
-  try {
-    await $fetch(`${baseApiUrl}/addproduct/`, {
-      method: 'POST',
-      body: JSON.stringify(
-        {
-          nama: dataForm.nama,
-          merk: dataForm.brand,
-          harga: dataForm.harga,
-          thumbnail: "thumbnail",
-          deskripsi: dataForm.deskripsi,
-          type_produk: kategori.value,
-          status: "tersedia",
-        })
-    })
-    alertCheckout()
-  } catch (error) {
-    console.log(error)
+const totalPage = computed(() => {
+  if (searchProduct.value !== "" && searchProduct.value !== undefined) {
+    return Math.ceil(filterProduct.value.length / limit.value);
   }
-}
+  return Math.ceil(produk.value?.data?.length / limit.value);
+});
+const startIndex = computed(() => {
+  return (page.value - 1) * limit.value;
+});
+const endIndex = computed(() => {
+  if (searchProduct.value !== "" && searchProduct.value !== undefined) {
+    return totalListProduk.value;
+  } else if (produk.value.data?.length < page.value * limit.value) {
+    return produk.value.data?.length;
+  } else {
+    return page.value * limit.value;
+  }
+});
+
+const changeLimit = (e) => {
+  limit.value = e.target.value;
+  page.value = 1;
+};
+
+// watchEffect(() => {
+//   // console.log("produk : ", produk.value.data.length);
+//   console.log("list : ", list.value.length);
+//   console.log("page : ", page.value);
+//   // console.log("limit : ", limit.value);
+//   // console.log("produk : ", produk.value.data.length);
+//   console.log(
+//     "searchProduct : ",
+//     searchProduct.value !== "" && searchProduct.value !== undefined
+//   );
+//   console.log("startIndex : ", startIndex.value);
+//   console.log("endIndex : ", endIndex.value);
+//   console.log("totalPage : ", totalPage.value);
+//   console.log("filterProduct : ", filterProduct.value.length);
+//   // console.log("totalPage : ", totalPage.value);
+//   // console.log("totalListProduk : ", totalListProduk.value);
+// });
 </script>
 
 <template>
   <section class="">
     <div class="mt-4">
-      <div class="bg-white dark:bg-gray-800 relative border sm:rounded-lg overflow-hidden">
+      <div
+        class="bg-white dark:bg-gray-800 relative border sm:rounded-lg overflow-hidden"
+      >
         <div class="flex flex-col space-y-3 md:space-y-0 md:space-x-4 p-4">
           <div class="mb-4">
             <h1 class="font-semibold text-xl">Data Produk</h1>
           </div>
-          <div class="flex m-0 justify-between">
+          <div class="flex !ml-0 justify-between">
             <div class="w-full md:w-1/3">
-              <form class="flex items-center">
-                <label for="simple-search" class="sr-only">Search</label>
-                <div class="relative w-full">
-                  <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <svg aria-hidden="true" class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor"
-                      viewbox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                      <path fill-rule="evenodd"
-                        d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-                        clip-rule="evenodd" />
-                    </svg>
-                  </div>
-                  <input type="text" id="simple-search"
-                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                    placeholder="Search" required="">
-                </div>
-              </form>
+              <SearchComps v-model="searchProduct" />
             </div>
             <div
-              class="w-full md:w-auto flex mr-4 flex-col md:flex-row space-y-2 md:space-y-0 items-stretch md:items-center justify-end md:space-x-3 flex-shrink-0">
-              <button type="button" @click="modalShow = true"
-                class="flex items-center justify-center border bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:ring-primary-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-primary-600 dark:hover:bg-primary-700 focus:outline-none dark:focus:ring-primary-800">
-                <Icon name="octicon:plus-16" class="mr-2 self-center" size="20"></Icon>
+              class="w-full md:w-auto flex mr-4 flex-col md:flex-row space-y-2 md:space-y-0 items-stretch md:items-center justify-end md:space-x-3 flex-shrink-0"
+            >
+              <button
+                type="button"
+                @click="showModal('add')"
+                class="flex items-center justify-center border bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:ring-primary-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-primary-600 dark:hover:bg-primary-700 focus:outline-none dark:focus:ring-primary-800"
+              >
+                <Icon
+                  name="octicon:plus-16"
+                  class="mr-2 self-center"
+                  size="20"
+                ></Icon>
                 Add product
               </button>
             </div>
           </div>
         </div>
         <div class="overflow-x-auto">
-          <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-            <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+          <table class="w-full text-sm text-left">
+            <thead class="text-xs text-gray-700 uppercase bg-gray-50">
               <tr>
-                <th scope="col" class="px-4 py-3">Nama Produk</th>
-                <th scope="col" class="px-4 py-3">Kategori</th>
-                <th scope="col" class="px-4 py-3">Brand</th>
-                <th scope="col" class="px-4 py-3">Harga</th>
-                <th scope="col" class="px-4 py-3">
-                  <span class="sr-only">Actions</span>
+                <th scope="col" class="px-4 py-3 w-auto text-center">No</th>
+                <th scope="col" class="px-4 py-3 w-3/5">Nama Produk</th>
+                <th scope="col" class="px-4 py-3 w-auto">Kategori</th>
+                <th scope="col" class="px-4 py-3 text-center w-auto">Status</th>
+                <th scope="col" class="px-4 py-3 w-auto">Brand</th>
+                <th scope="col" class="px-4 py-3 w-auto">Harga</th>
+                <th scope="col" class="px-4 py-3 text-center">
+                  <span>Actions</span>
                 </th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="data in produk.data" class="border-b dark:border-gray-700">
-                <th scope="row" class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                  {{ data.nama }}</th>
-                <td class="px-4 py-3">
+              <tr
+                v-for="(data, index) in filterProduct"
+                class="group border-b relative transition-all ease-in-out"
+              >
+                <td
+                  class="px-4 py-3 text-center group-hover:text-gray-500 group-hover:bg-slate-200 transition-all ease-in-out"
+                >
+                  {{ index + 1 }}
+                </td>
+                <th
+                  scope="row"
+                  class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap group-hover:text-gray-500 group-hover:bg-slate-200 transition-all ease-in-out"
+                >
+                  {{ data.nama }}
+                </th>
+                <td
+                  class="px-4 py-3 capitalize group-hover:text-gray-500 group-hover:bg-slate-200 transition-all ease-in-out"
+                >
                   {{ data.type_produk }}
                 </td>
-                <td class="px-4 py-3">
+                <td
+                  class="px-4 py-3 text-center group-hover:text-gray-500 group-hover:bg-slate-200 transition-all ease-in-out"
+                >
+                  <span
+                    class="px-4 py-1 text-white capitalize text-center"
+                    :class="
+                      data.status === 'disewa'
+                        ? 'rounded-full bg-red-500'
+                        : 'rounded-full bg-green-500'
+                    "
+                  >
+                    {{ data.status }}
+                  </span>
+                </td>
+                <td
+                  class="px-4 py-3 group-hover:text-gray-500 group-hover:bg-slate-200 transition-all ease-in-out"
+                >
                   {{ data.merk }}
                 </td>
-                <td class="px-4 py-3">Rp. {{ data.harga }}.000 </td>
-                <td class="px-4 py-3 flex items-center justify-end">
-                  <button id="apple-imac-27-dropdown-button" data-dropdown-toggle="apple-imac-27-dropdown"
-                    class="inline-flex items-center p-0.5 text-sm font-medium text-center text-gray-500 hover:text-gray-800 rounded-lg focus:outline-none dark:text-gray-400 dark:hover:text-gray-100"
-                    type="button">
-                    <svg class="w-5 h-5" aria-hidden="true" fill="currentColor" viewbox="0 0 20 20"
-                      xmlns="http://www.w3.org/2000/svg">
-                      <path
-                        d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z" />
-                    </svg>
-                  </button>
-                  <div id="apple-imac-27-dropdown"
-                    class="hidden z-10 w-44 bg-white rounded divide-y divide-gray-100 shadow dark:bg-gray-700 dark:divide-gray-600">
-                    <ul class="py-1 text-sm text-gray-700 dark:text-gray-200"
-                      aria-labelledby="apple-imac-27-dropdown-button">
-                      <li>
-                        <a href="#"
-                          class="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Show</a>
-                      </li>
-                      <li>
-                        <a href="#"
-                          class="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Update</a>
-                      </li>
-                    </ul>
-                    <div class="py-1">
-                      <a href="#"
-                        class="block py-2 px-4 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">Delete</a>
-                    </div>
-                  </div>
+                <td
+                  class="px-4 py-3 group-hover:text-gray-500 group-hover:bg-slate-200 transition-all ease-in-out"
+                >
+                  {{ formatCurrencyIDR(data.harga) }}
                 </td>
+                <td class="px-4 py-3 flex items-center justify-center">
+                  <span
+                    @click="showModal('edit', data.slug)"
+                    class="mx-1 px-2 border rounded py-1 hover:cursor-pointer hover:bg-green-300 transition-all ease-in-out hover:border-green-300"
+                  >
+                    <Icon name="bxs:edit" class="text-green-500" />
+                  </span>
+                  <span
+                    @click="deleteProduk(data.id_produk)"
+                    class="mx-1 px-2 border rounded py-1 hover:cursor-pointer hover:bg-red-300 transition-all ease-in-out hover:border-red-300"
+                  >
+                    <Icon name="icon-park-solid:delete" class="text-red-500" />
+                  </span>
+                  <!-- <Menu :idProduct="data.id_produk" @show-modal="showModal" /> -->
+                </td>
+                <span
+                  class="hidden group-hover:block absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border rounded-full px-3 bg-green-500 hover:cursor-pointer"
+                  @click="showModal('detail', data.slug)"
+                >
+                  <span class="self-center pr-2 text-white">View</span>
+                  <Icon name="raphael:view" class="text-white self-center" />
+                </span>
               </tr>
             </tbody>
           </table>
         </div>
+        <nav
+          class="flex flex-col md:flex-row justify-between items-start md:items-center space-y-3 md:space-y-0 p-4"
+          aria-label="Table navigation"
+        >
+          <div>
+            <span class="text-sm font-normal text-gray-500 dark:text-gray-400">
+              Showing
+              <span class="font-semibold text-gray-900 dark:text-white"
+                >{{ startIndex + 1 }} - {{ endIndex }}</span
+              >
+              of
+              <span class="font-semibold text-gray-900 dark:text-white">{{
+                totalListProduk
+              }}</span>
+            </span>
+            <select
+              @change="changeLimit($event)"
+              class="items-center justify-center h-full py-1 ml-4 px-3 text-gray-500 bg-white rounded border-gray-300 hover:bg-gray-100 hover:text-gray-700"
+              name=""
+              id=""
+            >
+              <option :selected="limit === 5 ? true : false" value="5">
+                5
+              </option>
+              <option :selected="limit === 10 ? true : false" value="10">
+                10
+              </option>
+              <option :selected="limit === 15 ? true : false" value="15">
+                15
+              </option>
+            </select>
+          </div>
+          <ul class="inline-flex items-stretch -space-x-px">
+            <li>
+              <button
+                @click="page -= 1"
+                class="flex items-center justify-center h-full py-1.5 px-3 ml-0 text-gray-500 bg-white rounded-l-lg border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
+              >
+                <span class="sr-only">Previous</span>
+                <svg
+                  class="w-5 h-5"
+                  aria-hidden="true"
+                  fill="currentColor"
+                  viewbox="0 0 20 20"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+                    clip-rule="evenodd"
+                  />
+                </svg>
+              </button>
+            </li>
+            <li v-for="index in totalPage" @click="page = index">
+              <button
+                class="flex items-center justify-center text-sm py-2 px-3 leading-tight text-gray-500 border border-gray-300 hover:bg-gray-100 hover:text-gray-700"
+                :class="page != index ? 'bg-slate-200' : 'bg-white font-bold'"
+              >
+                {{ index }}
+              </button>
+            </li>
+            <li>
+              <button
+                @click="page += 1"
+                class="flex items-center justify-center h-full py-1.5 px-3 leading-tight text-gray-500 bg-white rounded-r-lg border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
+              >
+                <span class="sr-only">Next</span>
+                <svg
+                  class="w-5 h-5"
+                  aria-hidden="true"
+                  fill="currentColor"
+                  viewbox="0 0 20 20"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                    clip-rule="evenodd"
+                  />
+                </svg>
+              </button>
+            </li>
+          </ul>
+        </nav>
       </div>
     </div>
   </section>
-  <div tabindex="-1" aria-hidden="true" :class="modalShow ? 'block bg-gray-800 bg-opacity-75' : 'hidden'"
-    class="overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-modal md:h-full ">
-    <div class="relative p-4 w-full max-w-2xl h-full md:h-auto mx-auto">
-      <div class="relative p-4 bg-white rounded-lg shadow dark:bg-gray-800 sm:p-5">
-        <div class="flex justify-between items-center pb-4 mb-4 rounded-t border-b sm:mb-5 dark:border-gray-600">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-            Tambah Produk
-          </h3>
-          <button type="button" @click="modalShow = false"
-            class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white">
-            <svg aria-hidden="true" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"
-              xmlns="http://www.w3.org/2000/svg">
-              <path fill-rule="evenodd"
-                d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                clip-rule="evenodd"></path>
-            </svg>
-            <span class="sr-only" @click="modalShow = false">Close modal</span>
-          </button>
-        </div>
-        <div action="#">
-          <div class="grid gap-4 mb-4 sm:grid-cols-2">
-            <div>
-              <label for="name" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Name</label>
-              <input type="text" name="nama" id="nama" v-model="dataForm.nama"
-                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                placeholder="Nikon D700" required="">
-            </div>
-            <div>
-              <label for="brand" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Brand</label>
-              <input type="text" name="brand" id="brand" v-model="dataForm.brand"
-                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                placeholder="Nikon / Sony" required="">
-            </div>
-            <div>
-              <label for="harga" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Harga</label>
-              <input type="number" name="harga" id="harga" v-model="dataForm.harga"
-                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                placeholder="120000" required="">
-            </div>
-            <div>
-              <label for="category" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Kategori</label>
-              <select id="category" @change="changeCategori($event.target.value)"
-                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
-                <option selected="">Kategori</option>
-                <option value="kamera_foto">Kamera Foto</option>
-                <option value="lensa">Lensa</option>
-                <option value="tv_monitor">TV/Monitors</option>
-                <option value="tripod">Tripod</option>
-              </select>
-            </div>
-            <div class="sm:col-span-2">
-              <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white" for="file_input">Upload Gambar</label>
-              <input @change="changeFile($event)" value="" ref="fileInput" name="thumbnail"
-                class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
-                id="file_input" type="file">
-            </div>
-            <div class="sm:col-span-2">
-              <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white" for="file_input">Spesifikasi {{
-                dispKategori }}</label>
-              <div v-if="kategori == 'kamera_foto'">
-                <div class="flex space-x-4 mb-4">
-                  <div class="basis-1/3">
-                    <label for="dimensi" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Dimensions
-                      (WxHxD)</label>
-                    <input type="text" name="dimensi" id="dimensi" v-model="spesifikasi.dimensi"
-                      class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                      placeholder="129.0 x 98.0 x 78.0 mm" required="">
-                  </div>
-                  <div class="basis-1/3">
-                    <label for="weight"
-                      class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Weight</label>
-                    <input type="text" name="weight" id="weight" v-model="spesifikasi.weight"
-                      class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                      placeholder="500 gr" required="">
-                  </div>
-                  <div class="basis-1/3">
-                    <label for="iso" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">ISO</label>
-                    <input type="text" name="iso" id="iso" v-model="spesifikasi.iso"
-                      class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                      placeholder="400 x 6000" required="">
-                  </div>
-                </div>
-                <div class="flex space-x-4">
-                  <div class="basis-1/3">
-                    <label for="shutter"
-                      class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Shutter</label>
-                    <input type="text" name="shutter" id="shutter" v-model="spesifikasi.shutter"
-                      class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                      placeholder="10 - 1/2000 seconds" required="">
-                  </div>
-                  <div class="basis-1/3">
-                    <label for="file_format" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">File
-                      Formats</label>
-                    <input type="text" name="file_format" id="file_format"
-                      class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                      placeholder="JPEG / JPG" required="">
-                  </div>
-                  <div class="basis-1/3">
-                    <label for="memory_card_type"
-                      class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Memory Card Type</label>
-                    <input type="text" name="memory_card_type" id="memory_card_type"
-                      v-model="spesifikasi.memory_card_type"
-                      class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                      placeholder="SD / SDHC" required="">
-                  </div>
-                </div>
-              </div>
-              <div v-if="kategori == 'lensa'">
-                <div class="flex space-x-4 mb-4">
-                  <div class="basis-1/3">
-                    <label for="focal_length" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Focal
-                      Length</label>
-                    <input type="text" name="focal_length" id="focal_length" v-model="spesifikasi.focal_length"
-                      class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                      placeholder="50 mm" required="">
-                  </div>
-                  <div class="basis-1/3">
-                    <label for="img_stabilization"
-                      class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Image Stabilization</label>
-                    <input type="text" name="img_stabilization" id="img_stabilization"
-                      v-model="spesifikasi.img_stabilization"
-                      class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                      placeholder="Tidak" required="">
-                  </div>
-                  <div class="basis-1/3">
-                    <label for="auto_focus"
-                      class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Autofocus</label>
-                    <input type="text" name="auto_focus" id="auto_focus" v-model="spesifikasi.auto_focus"
-                      class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                      placeholder="Ya" required="">
-                  </div>
-                </div>
-                <div class="flex space-x-4">
-                  <div class="basis-1/3">
-                    <label for="maks_apperture"
-                      class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Maksimal Aperture</label>
-                    <input type="text" name="maks_apperture" id="maks_apperture" v-model="spesifikasi.maks_apperture"
-                      class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                      placeholder="F1.8" required="">
-                  </div>
-                  <div class="basis-1/3">
-                    <label for="min_apperture"
-                      class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Minimal Aperture</label>
-                    <input type="text" name="min_apperture" id="min_apperture" v-model="spesifikasi.min_apperture"
-                      class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                      placeholder="F16" required="">
-                  </div>
-                  <div class="basis-1/3">
-                    <label for="apperture_ring"
-                      class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Aperture Ring</label>
-                    <input type="text" name="apperture_ring" id="apperture_ring" v-model="spesifikasi.apperture_ring"
-                      class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                      placeholder="Tidak" required="">
-                  </div>
-                </div>
-              </div>
-              <div v-if="kategori == 'tv_monitor'">
-                <div class="flex space-x-4 mb-4">
-                  <div class="basis-1/3">
-                    <label for="screen_type" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Screen
-                      Type</label>
-                    <input type="text" name="screen_type" id="screen_type" v-model="spesifikasi.screen_type"
-                      class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                      placeholder="LCD" required="">
-                  </div>
-                  <div class="basis-1/3">
-                    <label for="screen_size" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Screen
-                      size</label>
-                    <input type="text" name="screen_size" id="screen_size" v-model="spesifikasi.screen_size"
-                      class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                      placeholder="55″ (139cm)" required="">
-                  </div>
-                  <div class="basis-1/3">
-                    <label for="resolution"
-                      class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Resolution</label>
-                    <input type="text" name="resolution" id="resolution" v-model="spesifikasi.resolution"
-                      class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                      placeholder="3840 x 2160" required="">
-                  </div>
-                </div>
-                <div class="flex space-x-4">
-                  <div class="basis-1/3">
-                    <label for="dimensi" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Dimensi /
-                      Ukuran </label>
-                    <input type="text" name="maks_apperture" id="dimensi" v-model="spesifikasi.dimensi"
-                      class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                      placeholder="1237mm x 259.2mm x775mm" required="">
-                  </div>
-                  <div class="basis-1/3">
-                    <label for="refresh_rate" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Field
-                      Refresh Rate</label>
-                    <input type="text" name="refresh_rate" id="refresh_rate" v-model="spesifikasi.refresh_rate"
-                      class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                      placeholder="100" required="">
-                  </div>
-                  <div class="basis-1/3">
-                    <label for="connections"
-                      class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Connections</label>
-                    <input type="text" name="connections" id="connections" v-model="spesifikasi.connections"
-                      class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                      placeholder="HDMI, USB 2.0" required="">
-                  </div>
-                </div>
-              </div>
-              <div v-if="kategori == 'tripod'">
-                <div class="flex space-x-4 mb-4">
-                  <div class="basis-1/3">
-                    <label for="panjang"
-                      class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Panjang</label>
-                    <input type="text" name="panjang" id="panjang" v-model="spesifikasi.panjang"
-                      class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                      placeholder="3 meter" required="">
-                  </div>
-                  <div class="basis-1/3">
-                    <label for="bahan" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Bahan</label>
-                    <input type="text" name="bahan" id="bahan" v-model="spesifikasi.bahan"
-                      class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                      placeholder="Stainlestell" required="">
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="sm:col-span-2">
-              <label for="description"
-                class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Deskripsi</label>
-              <textarea id="description" rows="4" v-model="dataForm.deskripsi"
-                class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                placeholder="Deskripsi"></textarea>
-            </div>
-          </div>
-          <button type="submit" @click="handleAddProduk"
-            class="w-full border bg-green-500 font-semibold focus:ring-4 focus:outline-none focus:ring-primary-300 text-white rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800">
-            <Icon name="ic:round-add" size="24" class="mr-2 text-white" />
-            <span class="text-white font-semibold">Tambah</span>
-          </button>
-        </div>
-      </div>
-    </div>
+  <div
+    tabindex="-1"
+    aria-hidden="true"
+    :class="modalShow ? 'block bg-gray-800 bg-opacity-75' : 'hidden'"
+    class="overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-modal md:h-full"
+  >
+    <AdminFormProduct
+      :dataForm="fetchData"
+      :kategori="kategori"
+      :spesifikasi="spesifikasi"
+      :modalShow="modalShow"
+      :stats="stats"
+      @change-category="changeCategory"
+      @close-modal="closeModal"
+    />
   </div>
 </template>

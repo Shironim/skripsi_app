@@ -1,48 +1,69 @@
 <script setup>
+import { provide } from "vue";
+import { useUtils } from "@comps/useUtils";
+const token = ref("");
+const idUser = ref("");
+const namaUser = ref("");
+const search = ref("");
+const isChatActive = ref(false);
+const isChatLoading = ref(false);
+const historyChat = reactive([]);
 
-import { provide } from 'vue'
+const { generateRandomCode } = useUtils();
 
-const isChatActive = ref(false)
-const token = ref('')
-const idUser = ref('')
-const namaUser = ref('')
-
-provide('chat',{
+provide("chat", {
   isChatActive,
-  toogle: () => {
-    isChatActive.value = !isChatActive.value
-  }
-})
-provide('jwtToken',{
+  toogle: (value) => {
+    isChatActive.value = value;
+  },
+});
+provide("isChatLoading", {
+  isChatLoading,
+  toogleChatLoading: (value) => {
+    isChatLoading.value = value;
+  },
+});
+provide("historyChat", {
+  historyChat,
+  saveHistory: (history) => {
+    historyChat.push(history);
+  },
+});
+provide("search", {
+  search,
+});
+provide("jwtToken", {
   token,
   setToken: (jwtToken) => {
-    token.value = jwtToken
+    token.value = jwtToken;
   },
   unSetToken: () => {
-    token.value = ""
+    token.value = "";
   },
-})
-provide('idUser',{
+});
+provide("idUser", {
   idUser,
   setId: (id) => {
-    idUser.value = id
+    idUser.value = id;
   },
   unSetId: () => {
-    token.value = ""
+    token.value = "";
   },
-})
-provide('namaUser',{
+});
+provide("namaUser", {
   namaUser,
   setNama: (nama) => {
-    namaUser.value = nama
+    namaUser.value = nama;
   },
   unSetNama: () => {
-    token.value = ""
+    token.value = "";
   },
-})
+});
 
-
-
+if (!localStorage.getItem("usr-token")) {
+  const randomCode = generateRandomCode(12);
+  localStorage.setItem("usr-token", `user-${randomCode}`);
+}
 </script>
 <template>
   <NuxtLayout>

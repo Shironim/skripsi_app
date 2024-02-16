@@ -1,241 +1,398 @@
 <script setup>
 definePageMeta({
-  layout: 'admin',
-})
+  layout: "admin",
+});
+import { useDateFormat } from "@comps/useDateFormat";
+import { useUtils } from "@comps/useUtils";
+import { useUpload } from "@comps/useUpload";
+import { useFormatCurrency } from "@comps/useFormatCurrency";
 
+const search = ref();
 const modalShow = ref(false);
+const invoice = ref();
+const stats = ref("");
+const kodeInvoice = ref();
+const baseApiUrl = useRuntimeConfig().public.BASE_API_URL;
+const fileInput = ref({});
+const invoiceStatus = ref("");
+const page = ref(1);
+const limit = ref(5);
 
+const { data, pending, error, refresh } = await useFetch("/allinvoice", {
+  query: { page, limit },
+  method: "GET",
+  baseURL: baseApiUrl,
+});
 
+const fetchData = ref();
+const fetchProduk = ref();
+
+const { formatDateTime } = useDateFormat();
+const { handleUpload } = useUpload();
+const { renameFile, convertStringToArray } = useUtils();
+const { formatCurrencyIDR } = useFormatCurrency();
+
+const allStatus = [
+  {
+    value: "belum_bayar",
+    label: "Belum Bayar",
+  },
+  {
+    value: "dp",
+    label: "Down Payment",
+  },
+  {
+    value: "lunas",
+    label: "Lunas",
+  },
+];
+
+const changeStatus = (e) => {
+  invoiceStatus.value = e.target.value;
+};
+const selectFile = (e) => {
+  console.log(e.target.files[0].name);
+  fileInput.value = e.target.files[0];
+};
+
+watchEffect(() => {
+  if (!pending.value) {
+    invoice.value = data?.value?.data;
+  }
+
+  if (error.value) {
+    console.warn("error", error.value);
+  }
+});
+
+const deleteInvoice = async (kodeInvoice) => {
+  console.log("deleteInvoice called");
+  try {
+    await $fetch(`${baseApiUrl}/invoice`, {
+      method: "DELETE",
+      body: {
+        kodeInvoice,
+      },
+    }).then((res) => {
+      console.log(res);
+      refresh();
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+const editInvoice = async (kodeInvoice) => {
+  console.log("editInvoice called");
+  try {
+    await $fetch(`${baseApiUrl}/invoice`, {
+      method: "PATCH",
+      body: {
+        kodeInvoice: kodeInvoice,
+        status_sewa: invoiceStatus.value,
+        bukti_pembayaran: renameFile(fileInput.value.name),
+      },
+    }).then((res) => {
+      console.log(res);
+      refresh();
+      closeModal();
+    });
+    await handleUpload(fileInput.value, baseApiUrl);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+const loadProduct = async (fetch) => {
+  console.log("loadProduct called");
+  try {
+    await $fetch(`${baseApiUrl}/getSeveralProduct/`, {
+      method: "POST",
+      body: {
+        produk: convertStringToArray(fetch.produk),
+      },
+    }).then((res) => {
+      fetchProduk.value = res.data;
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+const loadTransaksi = async () => {
+  console.log("loadTransaksi called");
+  // Menggunakan useLazyAsyncData untuk memuat data produk secara malas (lazy)
+  const { pending, data } = await useLazyAsyncData(
+    "data",
+    () => $fetch(`${baseApiUrl}/invoice/${kodeInvoice.value}`),
+    {
+      method: "GET",
+      pick: ["data"],
+    }
+  );
+  if (!pending.value) {
+    fetchData.value = data?.value?.data[0];
+    return await loadProduct(data?.value?.data[0]);
+  }
+};
+
+const showModal = async (status, invoice) => {
+  console.log("showModal called");
+  modalShow.value = true;
+  stats.value = status;
+  kodeInvoice.value = invoice;
+  if (status !== "delete") {
+    return await loadTransaksi();
+  }
+};
+
+const closeModal = () => {
+  modalShow.value = false;
+  fetchData.value = {};
+  fetchProduk.value = {};
+  kodeInvoice.value = "";
+  stats.value = "";
+};
+
+const searchInvoice = computed(() => {
+  if (search.value !== "" && search.value !== undefined) {
+    return invoice.value.filter((fil) =>
+      fil.kode_invoice.toString().toLowerCase().includes(search.value)
+    );
+  }
+  return list.value;
+});
+
+const list = computed(() => {
+  return data.value.data.slice(startIndex.value, endIndex.value);
+});
+
+const totalList = computed(() => {
+  if (search.value !== "" && search.value !== undefined) {
+    return searchInvoice.value.length;
+  } else {
+    return data.value.data?.length;
+  }
+});
+const totalPage = computed(() => {
+  if (search.value !== "" && search.value !== undefined) {
+    return Math.ceil(searchInvoice.value.length / limit.value);
+  }
+  return Math.ceil(data.value?.data?.length / limit.value);
+});
+const startIndex = computed(() => {
+  return (page.value - 1) * limit.value;
+});
+const endIndex = computed(() => {
+  if (search.value !== "" && search.value !== undefined) {
+    return totalList.value;
+  } else if (data.value.data?.length < page.value * limit.value) {
+    return data.value.data?.length;
+  } else {
+    return page.value * limit.value;
+  }
+});
+
+const changeLimit = (e) => {
+  limit.value = e.target.value;
+  page.value = 1;
+};
+
+// watchEffect(() => {
+//   console.log("search : ", search.value);
+//   console.log("searchInvoice : ", searchInvoice.value);
+//   console.log("invoice : ", invoice.value);
+//   console.log("kodeInvoice : ", kodeInvoice.value);
+//   console.log("fetchProduct : ", fetchProduk.value);
+// });
 </script>
 
 <template>
   <section class="">
     <div class="mt-4">
       <!-- Start coding here -->
-      <div class="bg-white dark:bg-gray-800 relative border sm:rounded-lg overflow-hidden">
+      <div
+        class="bg-white dark:bg-gray-800 relative border sm:rounded-lg overflow-hidden"
+      >
         <div class="flex flex-col space-y-3 md:space-y-0 md:space-x-4 p-4">
           <div class="mb-4">
             <h1 class="font-semibold text-xl">Data Transaksi</h1>
           </div>
-          <div class="flex m-0 justify-between">
+          <div class="flex !ml-0 justify-between">
             <div class="w-full md:w-1/3">
-              <form class="flex items-center">
-                <label for="simple-search" class="sr-only">Search</label>
-                <div class="relative w-full">
-                  <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <svg aria-hidden="true" class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor"
-                      viewbox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                      <path fill-rule="evenodd"
-                        d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-                        clip-rule="evenodd" />
-                    </svg>
-                  </div>
-                  <input type="text" id="simple-search"
-                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                    placeholder="Search" required="">
-                </div>
-              </form>
-            </div>
-            <button id="filterDropdownButton" data-dropdown-toggle="filterDropdown"
-              class="w-full md:w-auto flex items-center justify-center py-2 px-4 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-primary-700 focus:z-10 focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700"
-              type="button">
-              <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="h-4 w-4 mr-2 text-gray-400"
-                viewbox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd"
-                  d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z"
-                  clip-rule="evenodd" />
-              </svg>
-              Filter
-              <svg class="-mr-1 ml-1.5 w-5 h-5" fill="currentColor" viewbox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"
-                aria-hidden="true">
-                <path clip-rule="evenodd" fill-rule="evenodd"
-                  d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
-              </svg>
-            </button>
-            <div id="filterDropdown" class="z-10 hidden w-48 p-3 bg-white rounded-lg shadow dark:bg-gray-700">
-              <h6 class="mb-3 text-sm font-medium text-gray-900 dark:text-white">Choose brand</h6>
-              <ul class="space-y-2 text-sm" aria-labelledby="filterDropdownButton">
-                <li class="flex items-center">
-                  <input id="apple" type="checkbox" value=""
-                    class="w-4 h-4 bg-gray-100 border-gray-300 rounded text-primary-600 focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500">
-                  <label for="apple" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-100">Apple
-                    (56)</label>
-                </li>
-                <li class="flex items-center">
-                  <input id="fitbit" type="checkbox" value=""
-                    class="w-4 h-4 bg-gray-100 border-gray-300 rounded text-primary-600 focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500">
-                  <label for="fitbit" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-100">Microsoft
-                    (16)</label>
-                </li>
-                <li class="flex items-center">
-                  <input id="razor" type="checkbox" value=""
-                    class="w-4 h-4 bg-gray-100 border-gray-300 rounded text-primary-600 focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500">
-                  <label for="razor" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-100">Razor
-                    (49)</label>
-                </li>
-                <li class="flex items-center">
-                  <input id="nikon" type="checkbox" value=""
-                    class="w-4 h-4 bg-gray-100 border-gray-300 rounded text-primary-600 focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500">
-                  <label for="nikon" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-100">Nikon
-                    (12)</label>
-                </li>
-                <li class="flex items-center">
-                  <input id="benq" type="checkbox" value=""
-                    class="w-4 h-4 bg-gray-100 border-gray-300 rounded text-primary-600 focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500">
-                  <label for="benq" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-100">BenQ (74)</label>
-                </li>
-              </ul>
+              <SearchComps v-model="search" />
             </div>
           </div>
         </div>
         <div class="overflow-x-auto">
-          <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-            <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+          <table class="w-full text-sm">
+            <thead class="text-xs text-gray-700 uppercase bg-gray-50 text-left">
               <tr>
-                <th scope="col" class="px-4 py-3">Invoice</th>
-                <th scope="col" class="px-4 py-3">Peminjam</th>
-                <th scope="col" class="px-4 py-3">Total Harga</th>
-                <th scope="col" class="px-4 py-3">Status</th>
-                <th scope="col" class="px-4 py-3">Tanggal DP</th>
-                <th scope="col" class="px-4 py-3">Bukti DP</th>
-                <th scope="col" class="px-4 py-3">Tanggal Pelunasan</th>
-                <th scope="col" class="px-4 py-3">Bukti Pelunasan</th>
-                <th scope="col" class="px-4 py-3">
-                  <span class="sr-only">Actions</span>
+                <th scope="col" class="px-4 py-3 w-auto text-center">No</th>
+                <th scope="col" class="px-4 py-3 w-3/12">Invoice</th>
+                <th scope="col" class="px-4 py-3 w-2/12">Peminjam</th>
+                <th scope="col" class="px-4 py-3 w-auto">Total Harga</th>
+                <th scope="col" class="px-4 py-3 w-1/12 text-center">Status</th>
+                <th scope="col" class="px-4 py-3 w-auto text-center">Date</th>
+                <th scope="col" class="px-4 py-3 text-center w-auto">
+                  Actions
                 </th>
               </tr>
             </thead>
             <tbody>
-              <tr class="border-b dark:border-gray-700">
-                <th scope="row" class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                  INV-ADMS-08-23-2</th>
-                <td class="px-4 py-3">
-                  Dimas Seto
+              <tr
+                v-for="(data, index) in searchInvoice"
+                class="group border-b relative transition-all ease-in-out"
+              >
+                <td
+                  class="px-4 py-3 text-center group-hover:text-gray-500 group-hover:bg-slate-200 transition-all ease-in-out"
+                >
+                  {{ index + 1 }}
                 </td>
-                <td class="px-4 py-3">
-                  Rp. 375.000
+                <th
+                  scope="row"
+                  class="text-left px-4 py-3 font-medium group-hover:text-gray-500 group-hover:bg-slate-200 whitespace-nowrap transition-all ease-in-out"
+                >
+                  {{ data.kode_invoice }}
+                </th>
+                <td
+                  class="px-4 py-3 group-hover:text-gray-500 group-hover:bg-slate-200 transition-all ease-in-out"
+                >
+                  {{ data.nama_penyewa }}
                 </td>
-                <td class="px-4 py-3">Belum Bayar</td>
-                <td class="px-4 py-3">-</td>
-                <td class="px-4 py-3">-</td>
-                <td class="px-4 py-3">-</td>
-                <td class="px-4 py-3">-</td>
-                <td class="px-4 py-3 flex items-center justify-end">
-                  <button id="apple-imac-27-dropdown-button" data-dropdown-toggle="apple-imac-27-dropdown"
-                    class="inline-flex items-center p-0.5 text-sm font-medium text-center text-gray-500 hover:text-gray-800 rounded-lg focus:outline-none dark:text-gray-400 dark:hover:text-gray-100"
-                    type="button">
-                    <svg class="w-5 h-5" aria-hidden="true" fill="currentColor" viewbox="0 0 20 20"
-                      xmlns="http://www.w3.org/2000/svg">
-                      <path
-                        d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z" />
-                    </svg>
-                  </button>
-                  <div id="apple-imac-27-dropdown"
-                    class="hidden z-10 w-44 bg-white rounded divide-y divide-gray-100 shadow dark:bg-gray-700 dark:divide-gray-600">
-                    <ul class="py-1 text-sm text-gray-700 dark:text-gray-200"
-                      aria-labelledby="apple-imac-27-dropdown-button">
-                      <li>
-                        <a href="#" @click="modalShow = true"
-                          class="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Show</a>
-                      </li>
-                      <li>
-                        <a href="#"
-                          class="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Edit</a>
-                      </li>
-                    </ul>
-                    <div class="py-1">
-                      <a href="#"
-                        class="block py-2 px-4 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">Delete</a>
-                    </div>
-                  </div>
+                <td
+                  class="px-4 py-3 group-hover:text-gray-500 group-hover:bg-slate-200 transition-all ease-in-out"
+                >
+                  {{ formatCurrencyIDR(data.total_harga) }}
                 </td>
-              </tr>
-              <tr class="border-b dark:border-gray-700">
-                <th scope="row" class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                  INV-ADMS-08-23-1</th>
-                <td class="px-4 py-3">
-                  Dimas Seto
+                <td
+                  class="px-4 py-3 text-center group-hover:text-gray-500 group-hover:bg-slate-200 transition-all ease-in-out"
+                >
+                  <div
+                    v-if="data.status_sewa == 'belum_bayar'"
+                    class="w8 h-2 rounded-full bg-red-500 mx-auto"
+                  ></div>
+                  <div
+                    v-if="data.status_sewa == 'dp'"
+                    class="w8 h-2 rounded-full bg-yellow-500 mx-auto"
+                  ></div>
+                  <div
+                    v-if="data.status_sewa == 'lunas'"
+                    class="w8 h-2 rounded-full bg-green-500 mx-auto"
+                  ></div>
                 </td>
-                <td class="px-4 py-3">
-                  Rp. 200.000
+                <td
+                  class="px-4 py-3 text-center group-hover:text-gray-500 group-hover:bg-slate-200 transition-all ease-in-out"
+                >
+                  {{ formatDateTime(data.created_at) || "-" }}
                 </td>
-                <td class="px-4 py-3">DP</td>
-                <td class="px-4 py-3">12-08-2023</td>
-                <td class="px-4 py-3 flex hover:text-blue-500 hover:cursor-pointer">
-                  <Icon name="ph:eye-bold" class="self-center mr-2" size="20"></Icon> <span
-                    class="self-center font-semibold text-md">Lihat</span>
+
+                <td class="px-4 py-3 flex items-center justify-center">
+                  <span
+                    class="mx-1 px-2 border rounded py-1 hover:cursor-pointer hover:bg-green-300 transition-all ease-in-out hover:border-green-300"
+                    @click="showModal('edit', data.kode_invoice)"
+                  >
+                    <Icon name="bxs:edit" class="text-green-500" />
+                  </span>
+                  <!-- <span
+                    class="mx-1 px-2 border rounded py-1 hover:cursor-pointer hover:bg-red-300 transition-all ease-in-out hover:border-red-300"
+                    @click="deleteInvoice(data.kode_invoice)"
+                  >
+                    <Icon name="icon-park-solid:delete" class="text-red-500" />
+                  </span> -->
                 </td>
-                <td class="px-4 py-3">-</td>
-                <td class="px-4 py-3">-</td>
-                <td class="px-4 py-3 flex items-center justify-end">
-                  <button id="apple-imac-20-dropdown-button" data-dropdown-toggle="apple-imac-20-dropdown"
-                    class="inline-flex items-center p-0.5 text-sm font-medium text-center text-gray-500 hover:text-gray-800 rounded-lg focus:outline-none dark:text-gray-400 dark:hover:text-gray-100"
-                    type="button">
-                    <svg class="w-5 h-5" aria-hidden="true" fill="currentColor" viewbox="0 0 20 20"
-                      xmlns="http://www.w3.org/2000/svg">
-                      <path
-                        d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z" />
-                    </svg>
-                  </button>
-                  <div id="apple-imac-20-dropdown"
-                    class="hidden z-10 w-44 bg-white rounded divide-y divide-gray-100 shadow dark:bg-gray-700 dark:divide-gray-600">
-                    <ul class="py-1 text-sm text-gray-700 dark:text-gray-200"
-                      aria-labelledby="apple-imac-20-dropdown-button">
-                      <li>
-                        <a href="#"
-                          class="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Show</a>
-                      </li>
-                      <li>
-                        <a href="#"
-                          class="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Edit</a>
-                      </li>
-                    </ul>
-                    <div class="py-1">
-                      <a href="#"
-                        class="block py-2 px-4 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">Delete</a>
-                    </div>
-                  </div>
-                </td>
+                <span
+                  class="hidden group-hover:block absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border rounded-full px-3 bg-green-500 hover:cursor-pointer"
+                  @click="showModal('detail', data.kode_invoice)"
+                >
+                  <span class="self-center pr-2 text-white">View</span>
+                  <Icon name="raphael:view" class="text-white self-center" />
+                </span>
               </tr>
             </tbody>
           </table>
         </div>
-        <nav class="flex flex-col md:flex-row justify-between items-start md:items-center space-y-3 md:space-y-0 p-4"
-          aria-label="Table navigation">
-          <span class="text-sm font-normal text-gray-500 dark:text-gray-400">
-            Showing
-            <span class="font-semibold text-gray-900 dark:text-white">1-2</span>
-            of
-            <span class="font-semibold text-gray-900 dark:text-white">2</span>
-          </span>
+        <nav
+          class="flex flex-col md:flex-row justify-between items-start md:items-center space-y-3 md:space-y-0 p-4"
+          aria-label="Table navigation"
+        >
+          <div>
+            <span class="text-sm font-normal text-gray-500 dark:text-gray-400">
+              Showing
+              <span class="font-semibold text-gray-900 dark:text-white"
+                >{{ startIndex + 1 }} - {{ endIndex }}</span
+              >
+              of
+              <span class="font-semibold text-gray-900 dark:text-white">{{
+                totalList
+              }}</span>
+            </span>
+            <select
+              @change="changeLimit($event)"
+              class="items-center justify-center h-full py-1 ml-4 px-3 text-gray-500 bg-white rounded border-gray-300 hover:bg-gray-100 hover:text-gray-700"
+              name=""
+              id=""
+            >
+              <option :selected="limit === 5 ? true : false" value="5">
+                5
+              </option>
+              <option :selected="limit === 10 ? true : false" value="10">
+                10
+              </option>
+              <option :selected="limit === 15 ? true : false" value="15">
+                15
+              </option>
+            </select>
+          </div>
           <ul class="inline-flex items-stretch -space-x-px">
             <li>
-              <a href="#"
-                class="flex items-center justify-center h-full py-1.5 px-3 ml-0 text-gray-500 bg-white rounded-l-lg border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">
+              <button
+                @click="page -= 1"
+                class="flex items-center justify-center h-full py-1.5 px-3 ml-0 text-gray-500 bg-white rounded-l-lg border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
+              >
                 <span class="sr-only">Previous</span>
-                <svg class="w-5 h-5" aria-hidden="true" fill="currentColor" viewbox="0 0 20 20"
-                  xmlns="http://www.w3.org/2000/svg">
-                  <path fill-rule="evenodd"
+                <svg
+                  class="w-5 h-5"
+                  aria-hidden="true"
+                  fill="currentColor"
+                  viewbox="0 0 20 20"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    fill-rule="evenodd"
                     d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
-                    clip-rule="evenodd" />
+                    clip-rule="evenodd"
+                  />
                 </svg>
-              </a>
+              </button>
+            </li>
+            <li v-for="index in totalPage" @click="page = index">
+              <button
+                class="flex items-center justify-center text-sm py-2 px-3 leading-tight text-gray-500 border border-gray-300 hover:bg-gray-100 hover:text-gray-700"
+                :class="page != index ? 'bg-slate-200' : 'bg-white font-bold'"
+              >
+                {{ index }}
+              </button>
             </li>
             <li>
-              <a href="#"
-                class="flex items-center justify-center text-sm py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">1</a>
-            </li>
-            <li>
-              <a href="#"
-                class="flex items-center justify-center h-full py-1.5 px-3 leading-tight text-gray-500 bg-white rounded-r-lg border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">
+              <button
+                @click="page += 1"
+                class="flex items-center justify-center h-full py-1.5 px-3 leading-tight text-gray-500 bg-white rounded-r-lg border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
+              >
                 <span class="sr-only">Next</span>
-                <svg class="w-5 h-5" aria-hidden="true" fill="currentColor" viewbox="0 0 20 20"
-                  xmlns="http://www.w3.org/2000/svg">
-                  <path fill-rule="evenodd"
+                <svg
+                  class="w-5 h-5"
+                  aria-hidden="true"
+                  fill="currentColor"
+                  viewbox="0 0 20 20"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    fill-rule="evenodd"
                     d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                    clip-rule="evenodd" />
+                    clip-rule="evenodd"
+                  />
                 </svg>
-              </a>
+              </button>
             </li>
           </ul>
         </nav>
@@ -243,114 +400,16 @@ const modalShow = ref(false);
     </div>
   </section>
   <!-- Main modal -->
-  <div id="createProduct" tabindex="-1" aria-hidden="true"
-    :class="modalShow ? 'block bg-gray-800 bg-opacity-75' : 'hidden'"
-    class="overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-modal md:h-full ">
-    <div class="relative p-4 w-full max-w-2xl h-full md:h-auto mx-auto">
-      <!-- Modal content -->
-      <div class="relative p-4 bg-white rounded-lg shadow dark:bg-gray-800 sm:p-5">
-        <!-- Modal header -->
-        <div class="flex justify-between items-center pb-4 mb-4 rounded-t border-b sm:mb-5 dark:border-gray-600">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-            Form Invoice
-          </h3>
-          <button type="button" @click="modalShow = false"
-            class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white">
-            <svg aria-hidden="true" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"
-              xmlns="http://www.w3.org/2000/svg">
-              <path fill-rule="evenodd"
-                d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                clip-rule="evenodd"></path>
-            </svg>
-            <span class="sr-only" @click="modalShow = false">Close modal</span>
-          </button>
-        </div>
-        <!-- Modal body -->
-        <form action="#">
-          <div class="flex flex-col w-full border-b-2 pb-4 mb-6 space-y-2">
-            <div class="flex justify-between">
-              <p class="self-center text-lg font-semibold">
-                Kode Invoice
-              </p>
-              <p class="self-center text-lg">
-                INV-ADMS-08-23-2
-              </p>
-            </div>
-            <div class="flex justify-between">
-              <p class="self-center font-semibold">
-                Nama Peminjam
-              </p>
-              <p class="self-center ">
-                Dimas Seto
-              </p>
-            </div>
-            <div class="flex justify-between">
-              <p class="self-center font-semibold">
-                Status Pembayaran
-              </p>
-              <p class="self-center text-sm bg-slate-500 px-3 py-1 rounded-md text-white font-semibold">
-                Belum Bayar
-              </p>
-            </div>
-          </div>
-          <div class="mb-6 border-b-2 pb-4">
-            <h2 class="text-lg font-semibold mb-4">Alat yang disewa</h2>
-            <div class="flex mb-2">
-              <div class="basis-1/3">
-                <span class="font-semibold">Nama Alat</span>
-              </div>
-              <div class="basis-1/3">
-                <span class="font-semibold">Gambar</span>
-              </div>
-              <div class="basis-1/3">
-                <span class="font-semibold">Tanggal Ambil</span>
-              </div>
-              <div class="basis-1/3">
-                <span class="font-semibold">Tanggal Kembali</span>
-              </div>
-            </div>
-            <div class="flex">
-              <div class="basis-1/3 self-center">
-                Camera EOS Canon 700D
-              </div>
-              <div class="basis-1/3 self-center">
-                <img src="/images/canon-eos-700d.png" width="100" height="100" alt="">
-              </div>
-              <div class="basis-1/3 self-center">
-                29/08/2023
-              </div>
-              <div class="basis-1/3 self-center">
-                31/08/2023
-              </div>
-            </div>
-          </div>
-          <div class="grid gap-4 mb-4 sm:grid-cols-2">
-            <div>
-              <label for="update_status" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Update
-                Status</label>
-              <select
-                class="appearance-none bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                name="update_status" id="">
-                <option value="">Status</option>
-                <option value="">Sudah Diambil</option>
-              </select>
-            </div>
-            <div class="sm:col-span-2">
-              <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white" for="file_input">Upload Bukti
-                Pembayaran</label>
-              <input
-                class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
-                id="file_input" type="file">
-            </div>
-
-          </div>
-          <button type="submit"
-            class="w-full border bg-green-500 font-semibold focus:ring-4 focus:outline-none focus:ring-primary-300 text-white rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800">
-            <Icon name="dashicons:update" size="24" class="mr-2 text-white" />
-            <span class="font-semibold text-white">Perbarui</span>
-          </button>
-        </form>
-      </div>
-    </div>
-  </div>
+  <AdminDetailTransaksi
+    :dataForm="fetchData"
+    :invoiceStatus="invoiceStatus"
+    :allStatus="allStatus"
+    :dataProduk="fetchProduk"
+    :stats="stats"
+    :modalShow="modalShow"
+    @close-modal="closeModal"
+    @change-status="changeStatus"
+    @edit-invoice="editInvoice"
+    @select-file="selectFile"
+  />
 </template>
