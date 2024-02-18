@@ -2,9 +2,7 @@ ARG NODE_VERSION=18.14.2
 
 FROM node:${NODE_VERSION}-slim as base
 
-ARG PORT=3000
-
-ENV NODE_ENV=production
+ARG PORT=8080
 
 WORKDIR /src
 
@@ -12,7 +10,7 @@ WORKDIR /src
 FROM base as build
 
 COPY --link package.json package-lock.json .
-RUN npm install --production=false
+RUN npm install
 
 COPY --link . .
 
