@@ -5,7 +5,7 @@ const { isChatActive, toogle } = inject("chat");
 const { historyChat, saveHistory } = inject("historyChat");
 const { isChatLoading, toogleChatLoading } = inject("isChatLoading");
 const inputChat = ref("");
-const baseApiUrl = useRuntimeConfig().public.BASE_API_URL;
+const baseApiImg = useRuntimeConfig().public.IMAGE_URL;
 const productSearch = ref();
 
 const userToken = localStorage.getItem("usr-token");
@@ -160,7 +160,7 @@ const addProductToCart = async (produk) => {
             <div>
               <p class="pb-2 text-md">{{ data.message.nama }}</p>
               <NuxtImg
-                :src="`${baseApiUrl}/${data.message.thumbnail}`"
+                :src="`${baseApiImg}/${data.message.thumbnail}`"
                 width="80px"
                 height="80px"
                 class="pb-2"

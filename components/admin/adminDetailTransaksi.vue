@@ -172,7 +172,7 @@ const setStatus = (stats) => {
               <div class="basis-3/6 self-center">{{ item.nama }}</div>
               <div class="basis-2/6 self-center">
                 <img
-                  :src="`${baseApiUrl}/${item.thumbnail}`"
+                  :src="`${baseApiImg}/${item.thumbnail}`"
                   width="100"
                   height="100"
                   alt=""
