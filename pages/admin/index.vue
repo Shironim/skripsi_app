@@ -96,31 +96,6 @@ const transaksiBlmBayar = computed(() => {
   );
 });
 
-const today = new Date();
-
-const thisMonth = today.getMonth();
-
-const { formatCurrencyIDR } = useFormatCurrency();
-
-const setStatus = (stats) => {
-  let status = "";
-  switch (stats) {
-    case "belum_bayar":
-      status = "Menunggu Pembayaran";
-      break;
-    case "dp":
-      status = "Down Payment";
-      break;
-    case "lunas":
-      status = "Lunas";
-      break;
-    default:
-      status = "DEFAULT";
-      break;
-  }
-  return status;
-};
-
 const dataTransaksi = ref({
   labels: [
     "January",
