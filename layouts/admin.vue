@@ -6,6 +6,10 @@ import { initFlowbite } from 'flowbite'
 onMounted(() => {
     initFlowbite();
 })
+useHead({
+  title: "ADMIN AD/MS",
+  meta: [{ name: "description", content: "Persewaan Kamera" }],
+});
 </script>
 
 <template>
